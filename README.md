@@ -11,6 +11,8 @@ partir du code.
 npm install ic-angular-uikit
 ```
 
+**Documentation officielle : <https://angular.uikit.imperiumclan.fr/>**
+
 **Installation, configuration et utilisation : voir le [README du paquet](projects/ic-angular-uikit/README.md)**
 (c'est aussi la page npm). Ce fichier-ci décrit le dépôt et le développement de la librairie.
 
@@ -63,7 +65,8 @@ styles qui ne fuient pas dans les instances imbriquées du même composant (comb
 
 ## Site de documentation en Docker
 
-Image statique (nginx non root, port 8080, CSP stricte, `HEALTHCHECK` sur `/healthz`), publiée sur Docker Hub :
+Image statique (nginx non root, port 8080, CSP stricte, `HEALTHCHECK` sur `/healthz`) — celle qui sert
+<https://angular.uikit.imperiumclan.fr/> —, publiée sur Docker Hub :
 [`iemperor/ic-angular-uikit-docs`](https://hub.docker.com/r/iemperor/ic-angular-uikit-docs) (voir `DOCKERHUB.md`).
 
 ```sh

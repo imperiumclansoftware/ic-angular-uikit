@@ -22,7 +22,8 @@ ARG VERSION=dev
 LABEL org.opencontainers.image.title="IC Angular UiKit — documentation" \
       org.opencontainers.image.description="Site de documentation de la librairie Angular ic-angular-uikit : exemples interactifs, API, guides." \
       org.opencontainers.image.source="https://github.com/imperiumclansoftware/ic-angular-uikit" \
-      org.opencontainers.image.url="https://www.npmjs.com/package/ic-angular-uikit" \
+      org.opencontainers.image.url="https://angular.uikit.imperiumclan.fr/" \
+      org.opencontainers.image.documentation="https://angular.uikit.imperiumclan.fr/" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.version="${VERSION}"
 

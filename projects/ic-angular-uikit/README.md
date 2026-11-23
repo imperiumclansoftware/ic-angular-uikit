@@ -7,6 +7,8 @@ Bibliothèque de composants **Angular 22** accessibles et thémables : composant
 `OnPush`, templatisables (slots et `ng-template`), thèmes **clair**, **sombre** et **saisonniers**, compatible avec une
 CSP stricte et Trusted Types.
 
+**Documentation : <https://angular.uikit.imperiumclan.fr/>** — exemples interactifs, API de chaque composant, guides.
+
 - Plus de 25 composants : formulaires avec validation, tableaux (recherche, filtres, pagination), menus multi-niveaux, barre
   d'application, carrousel, tableau de bord personnalisable, organigramme…
 - Accessibilité visée : **WCAG 2.1 AA** (contrastes vérifiés dans tous les thèmes, clavier complet, motifs ARIA).
@@ -88,8 +90,8 @@ export class Newsletter {
 | Affichage | `ui-badge`, `ui-card`, `ui-carousel`, `ui-dashboard`, `ui-icon`, `ui-org-chart`, `ui-ribbon`, `ui-table`, `ui-season-effects` |
 | Retours & superpositions | `ui-alert`, `ui-dialog` |
 
-Chaque composant documente ses inputs, outputs, slots, variables CSS et exemples dans le site de documentation
-(voir plus bas).
+Chaque composant documente ses inputs, outputs, slots, variables CSS et exemples dans le
+[site de documentation](https://angular.uikit.imperiumclan.fr/).
 
 ## Thèmes
 
@@ -177,15 +179,18 @@ La disposition (`layoutChange`) est un JSON sérialisable à enregistrer côté 
 
 ## Documentation
 
-Le site de documentation (exemples interactifs, API de chaque composant, guides thèmes, validation, accessibilité) est
-dans le dépôt : <https://github.com/imperiumclansoftware/ic-angular-uikit>
+Site officiel : **<https://angular.uikit.imperiumclan.fr/>** — exemples interactifs, API de chaque composant (inputs,
+outputs, slots, variables CSS), guides thèmes, validation et accessibilité, exemples côté serveur.
+
+Pour le consulter hors ligne : `docker run -d -p 8080:8080 iemperor/ic-angular-uikit-docs`, ou depuis les sources :
 
 ```sh
 git clone https://github.com/imperiumclansoftware/ic-angular-uikit.git
 cd ic-angular-uikit && npm install && npm start   # http://localhost:4220
 ```
 
-Questions et anomalies : <https://github.com/imperiumclansoftware/ic-angular-uikit/issues>
+Code source : <https://github.com/imperiumclansoftware/ic-angular-uikit> — questions et anomalies :
+<https://github.com/imperiumclansoftware/ic-angular-uikit/issues>
 
 ## Licence
 

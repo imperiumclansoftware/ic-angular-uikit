@@ -5,7 +5,7 @@ composants **Angular 22** accessibles (WCAG 2.1 AA) et thémables : exemples int
 (inputs, outputs, slots, variables CSS), guides thèmes, validation et accessibilité, exemples côté serveur. Interface
 en français.
 
-Code source : https://github.com/imperiumclansoftware/ic-angular-uikit
+Site officiel : https://angular.uikit.imperiumclan.fr/ — code source : https://github.com/imperiumclansoftware/ic-angular-uikit
 
 ## Démarrage rapide
 
