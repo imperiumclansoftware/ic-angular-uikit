@@ -1,0 +1,76 @@
+/*
+ * Le ruban occupe un carré dans le coin (overflow hidden) : la bande tournée à 45° est découpée
+ * par ce carré, quel que soit le conteneur. Seul `position: relative` est requis sur le parent.
+ */
+:host {
+  --_size: var(--ui-ribbon-size, 6.5rem);
+  /* Distance du centre de la bande au coin : la partie visible de la bande ≈ la taille du carré. */
+  --_offset: calc(var(--_size) * 0.36);
+  --_bg: var(--ui-color-primary);
+  --_fg: var(--ui-color-on-primary);
+  position: absolute;
+  z-index: 2;
+  width: var(--_size);
+  height: var(--_size);
+  overflow: hidden;
+  pointer-events: none;
+}
+:host(.ui-ribbon--sm) { --_size: var(--ui-ribbon-size, 5rem); }
+:host(.ui-ribbon--lg) { --_size: var(--ui-ribbon-size, 8rem); }
+
+:host(.ui-ribbon--top-left) { top: 0; left: 0; }
+:host(.ui-ribbon--top-right) { top: 0; right: 0; }
+:host(.ui-ribbon--bottom-left) { bottom: 0; left: 0; }
+:host(.ui-ribbon--bottom-right) { bottom: 0; right: 0; }
+
+:host(.ui-ribbon--neutral) { --_bg: var(--ui-color-neutral); --_fg: var(--ui-color-on-neutral); }
+:host(.ui-ribbon--success) { --_bg: var(--ui-color-success); --_fg: var(--ui-color-on-success); }
+:host(.ui-ribbon--warning) { --_bg: var(--ui-color-warning); --_fg: var(--ui-color-on-warning); }
+:host(.ui-ribbon--danger) { --_bg: var(--ui-color-danger); --_fg: var(--ui-color-on-danger); }
+
+.ui-ribbon__band {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  width: calc(var(--_size) * 1.8);
+  padding: 0.3em 0;
+  background: var(--_bg);
+  color: var(--_fg);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 0.25);
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-bold);
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+:host(.ui-ribbon--sm) .ui-ribbon__band { font-size: 0.6875rem; padding: 0.2em 0; }
+:host(.ui-ribbon--lg) .ui-ribbon__band { font-size: var(--ui-font-size-sm); }
+
+/* Centre de la bande sur la diagonale du coin, puis rotation. */
+:host(.ui-ribbon--top-right) .ui-ribbon__band {
+  top: var(--_offset);
+  left: calc(100% - var(--_offset));
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+:host(.ui-ribbon--top-left) .ui-ribbon__band {
+  top: var(--_offset);
+  left: var(--_offset);
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+:host(.ui-ribbon--bottom-right) .ui-ribbon__band {
+  top: calc(100% - var(--_offset));
+  left: calc(100% - var(--_offset));
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+:host(.ui-ribbon--bottom-left) .ui-ribbon__band {
+  top: calc(100% - var(--_offset));
+  left: var(--_offset);
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+@media (forced-colors: active) {
+  .ui-ribbon__band { border: 1px solid CanvasText; }
+}

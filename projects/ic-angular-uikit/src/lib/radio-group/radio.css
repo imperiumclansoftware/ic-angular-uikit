@@ -1,0 +1,56 @@
+:host {
+  --_size: 1.125rem;
+  --_on: var(--ui-radio-color, var(--ui-color-primary));
+  display: inline-flex;
+}
+:host-context(.ui-radio-group--sm) { --_size: 1rem; }
+:host-context(.ui-radio-group--lg) { --_size: 1.375rem; }
+
+/* Toute la ligne est cliquable ; zone d'interaction d'au moins 44 px de haut. */
+.ui-radio__row {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--ui-space-3);
+  min-block-size: 44px;
+  padding-block: calc((44px - 1.5em) / 2);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+:host(.ui-radio--disabled) .ui-radio__row { cursor: not-allowed; opacity: 0.55; }
+
+.ui-radio__input {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex: none;
+  inline-size: var(--_size);
+  aspect-ratio: 1;
+  margin: calc((1.5em - var(--_size)) / 2) 0 0;
+  border: 2px solid var(--ui-color-border-control);
+  border-radius: 50%;
+  background: var(--ui-color-surface);
+  cursor: inherit;
+  transition: border-color var(--ui-duration-fast) var(--ui-easing);
+}
+.ui-radio__input::before {
+  content: '';
+  inline-size: calc(var(--_size) * 0.45);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--_on);
+  scale: 0;
+  transition: scale var(--ui-duration-fast) var(--ui-easing);
+}
+.ui-radio__input:checked { border-color: var(--_on); }
+.ui-radio__input:checked::before { scale: 1; }
+.ui-radio__row:hover .ui-radio__input:not(:disabled, :checked) { border-color: var(--ui-color-text-muted); }
+.ui-radio__input:focus-visible { outline: 2px solid var(--ui-color-focus-ring); outline-offset: 2px; }
+/* Plus spécifique que la règle :hover ci-dessus : l'état invalide reste visible au survol. */
+.ui-radio__row .ui-radio__input[aria-invalid='true']:not(:disabled, :checked) { border-color: var(--ui-color-danger); }
+
+@media (forced-colors: active) {
+  .ui-radio__input::before { background: CanvasText; }
+}
+
+.ui-radio__text { display: flex; flex-direction: column; }
+.ui-radio__description { color: var(--ui-color-text-muted); font-size: var(--ui-font-size-xs); }

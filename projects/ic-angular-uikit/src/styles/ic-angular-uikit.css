@@ -1,0 +1,22 @@
+/*
+ * Point d'entrée des styles globaux d'IC Angular UiKit.
+ * À ajouter dans angular.json > styles : "node_modules/ic-angular-uikit/styles/ic-angular-uikit.css"
+ */
+@import './tokens.css';
+@import './themes/light.css';
+@import './themes/dark.css';
+@import './seasons.css';
+
+/* Un sous-arbre thémé reprend le fond et la couleur de texte de son thème. */
+[data-ui-theme] {
+  background-color: var(--ui-color-bg);
+  color: var(--ui-color-text);
+}
+
+body {
+  margin: 0;
+  font-family: var(--ui-font-family);
+  line-height: var(--ui-line-height);
+  background-color: var(--ui-color-bg);
+  color: var(--ui-color-text);
+}

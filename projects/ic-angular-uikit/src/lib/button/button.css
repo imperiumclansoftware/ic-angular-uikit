@@ -1,0 +1,107 @@
+:host {
+  --_bg: var(--ui-color-primary);
+  --_bg-hover: var(--ui-color-primary-hover);
+  --_fg: var(--ui-color-on-primary);
+  --_border: transparent;
+  --_height: var(--ui-control-height-md);
+  --_pad: var(--ui-space-4);
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-2);
+  box-sizing: border-box;
+  min-height: var(--_height);
+  padding: 0 var(--_pad);
+  border: 1px solid var(--_border);
+  border-radius: var(--ui-button-radius, var(--ui-radius-md));
+  background: var(--_bg);
+  color: var(--_fg);
+  font: inherit;
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-button-font-weight, var(--ui-font-weight-medium));
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color var(--ui-duration-fast) var(--ui-easing),
+    border-color var(--ui-duration-fast) var(--ui-easing),
+    box-shadow var(--ui-duration-fast) var(--ui-easing),
+    transform var(--ui-duration-fast) var(--ui-easing);
+}
+
+:host(:hover) { background: var(--_bg-hover); }
+:host(:active) { transform: translateY(1px); }
+:host(:focus-visible) {
+  outline: 2px solid var(--ui-color-focus-ring);
+  outline-offset: 2px;
+}
+:host(:disabled),
+:host([aria-disabled='true']) {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+:host(.ui-button--loading) { pointer-events: none; }
+
+:host(.ui-button--secondary) {
+  --_bg: var(--ui-color-neutral-subtle);
+  --_bg-hover: var(--ui-color-active);
+  --_fg: var(--ui-color-neutral-text);
+}
+:host(.ui-button--outline) {
+  --_bg: transparent;
+  --_bg-hover: var(--ui-color-hover);
+  --_fg: var(--ui-color-text);
+  --_border: var(--ui-color-border-strong);
+}
+:host(.ui-button--ghost) {
+  --_bg: transparent;
+  --_bg-hover: var(--ui-color-hover);
+  --_fg: var(--ui-color-primary-text);
+}
+:host(.ui-button--success) {
+  --_bg: var(--ui-color-success);
+  --_bg-hover: var(--ui-color-success-hover);
+  --_fg: var(--ui-color-on-success);
+}
+:host(.ui-button--warning) {
+  --_bg: var(--ui-color-warning);
+  --_bg-hover: var(--ui-color-warning-hover);
+  --_fg: var(--ui-color-on-warning);
+}
+:host(.ui-button--danger) {
+  --_bg: var(--ui-color-danger);
+  --_bg-hover: var(--ui-color-danger-hover);
+  --_fg: var(--ui-color-on-danger);
+}
+
+:host(.ui-button--sm) { --_height: var(--ui-control-height-sm); --_pad: var(--ui-space-3); font-size: var(--ui-font-size-xs); }
+:host(.ui-button--lg) { --_height: var(--ui-control-height-lg); --_pad: var(--ui-space-6); font-size: var(--ui-font-size-md); }
+:host(.ui-button--block) { display: flex; width: 100%; }
+:host(.ui-button--icon-only) { width: var(--_height); padding: 0; }
+
+.ui-button__label:empty { display: none; }
+:host(.ui-button--loading) .ui-button__label { opacity: 0.7; }
+
+.ui-button__spinner {
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: ui-button-spin 0.7s linear infinite;
+}
+
+@keyframes ui-button-spin { to { transform: rotate(360deg); } }
+
+/* Bouton bascule (aria-pressed) : fond et contour, pas seulement la couleur. */
+:host([aria-pressed='true']) {
+  --_bg: var(--ui-color-primary-subtle);
+  --_bg-hover: var(--ui-color-primary-subtle);
+  --_fg: var(--ui-color-primary-text);
+  box-shadow: inset 0 0 0 1px var(--ui-color-primary);
+}

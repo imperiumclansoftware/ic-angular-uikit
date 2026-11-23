@@ -1,0 +1,53 @@
+{
+  "name": "ic-angular-uikit",
+  "version": "0.1.0",
+  "description": "Composants Angular 22 accessibles (WCAG 2.1 AA) et thémables : formulaires, tableaux, menus, carrousel, tableau de bord… Thèmes clair, sombre et saisonniers, compatible CSP stricte.",
+  "keywords": [
+    "angular",
+    "angular22",
+    "components",
+    "ui-kit",
+    "design-system",
+    "accessibility",
+    "a11y",
+    "wcag",
+    "themes",
+    "dark-mode",
+    "signals",
+    "standalone",
+    "dashboard",
+    "data-table",
+    "forms"
+  ],
+  "license": "MIT",
+  "author": "Imperium Clan Software",
+  "homepage": "https://github.com/imperiumclansoftware/ic-angular-uikit#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imperiumclansoftware/ic-angular-uikit.git",
+    "directory": "projects/ic-angular-uikit"
+  },
+  "bugs": {
+    "url": "https://github.com/imperiumclansoftware/ic-angular-uikit/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "@angular/common": "^22.2.0",
+    "@angular/core": "^22.2.0",
+    "@angular/forms": "^22.2.0",
+    "rxjs": "~7.8.0"
+  },
+  "dependencies": {
+    "tslib": "^2.3.0"
+  },
+  "exports": {
+    "./styles/*": {
+      "default": "./styles/*"
+    }
+  },
+  "sideEffects": [
+    "*.css"
+  ]
+}

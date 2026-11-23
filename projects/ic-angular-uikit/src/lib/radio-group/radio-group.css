@@ -1,0 +1,12 @@
+:host { display: block; font-size: var(--ui-font-size-sm); color: var(--ui-color-text); }
+:host(.ui-radio-group--sm) { font-size: var(--ui-font-size-xs); }
+:host(.ui-radio-group--lg) { font-size: var(--ui-font-size-md); }
+
+.ui-radio-group__fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.ui-radio-group__legend { padding: 0; margin-bottom: var(--ui-space-1); font-weight: var(--ui-font-weight-medium); }
+.ui-radio-group__required { color: var(--ui-color-danger); margin-left: 2px; }
+
+.ui-radio-group__options { display: flex; flex-direction: column; }
+:host(.ui-radio-group--horizontal) .ui-radio-group__options { flex-direction: row; flex-wrap: wrap; column-gap: var(--ui-space-6); }
+
+.ui-radio-group__message { margin-top: var(--ui-space-1); }

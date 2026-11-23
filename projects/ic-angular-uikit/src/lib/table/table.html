@@ -1,0 +1,406 @@
+<ng-content select="ui-ribbon" />
+
+@if (hasToolbar() || filtering()) {
+  <div class="ui-table__toolbar">
+    @if (searchable()) {
+      <ui-text-field
+        class="ui-table__search"
+        type="search"
+        size="sm"
+        clearable
+        autocomplete="off"
+        [ariaLabel]="'Rechercher dans ' + (caption() || regionLabel())"
+        [placeholder]="searchPlaceholder()"
+        [(value)]="search"
+      >
+        <svg uiPrefix class="ui-table__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" />
+        </svg>
+      </ui-text-field>
+    }
+    <span class="ui-table__count" aria-live="polite">
+      @if (filtering() && !manualFilter()) {
+        {{ rows().length }} sur {{ data().length }} ligne{{ data().length > 1 ? 's' : '' }}
+      }
+    </span>
+    @if (filtering()) {
+      <button type="button" class="ui-table__tool" (click)="resetFilters()">Réinitialiser</button>
+    }
+    <ng-content select="[uiTableToolbar]" />
+    @if (hasColumnsMenu()) {
+      <!-- Échap délégué : il remonte du bouton ou d'un contrôle du menu (éléments focalisables). -->
+      <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+      <div class="ui-table__columns" (keydown)="onColumnsKeydown($event)">
+        <button
+          type="button"
+          class="ui-table__tool ui-table__columns-button"
+          [attr.aria-expanded]="columnsMenuOpen()"
+          [attr.aria-controls]="baseId + '-columns'"
+          (click)="columnsMenuOpen.set(!columnsMenuOpen())"
+        >
+          <svg class="ui-table__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="16" rx="2" /><path d="M9 4v16M15 4v16" />
+          </svg>
+          Colonnes
+          @if (columnToggle() && hiddenKeys().size) {
+            <span class="ui-table__badge">{{ hiddenKeys().size }} masquée{{ hiddenKeys().size > 1 ? 's' : '' }}</span>
+          }
+        </button>
+        @if (columnsMenuOpen()) {
+          <div
+            class="ui-table__columns-panel"
+            role="group"
+            [id]="baseId + '-columns'"
+            [attr.aria-label]="columnToggle() ? 'Colonnes affichées' : 'Ordre des colonnes'"
+          >
+            @for (column of orderedColumns(); track column.key; let first = $first, last = $last) {
+              <div
+                class="ui-table__col"
+                [class.ui-table__col--drag]="dragKey() === column.key"
+                [class.ui-table__col--drop]="dropKey() === column.key"
+                [attr.draggable]="reorderable() ? 'true' : null"
+                (dragstart)="onDragStart($event, column)"
+                (dragover)="onDragOver($event, column)"
+                (drop)="onDrop($event, column)"
+                (dragend)="onDragEnd()"
+              >
+                @if (reorderable()) {
+                  <svg class="ui-table__grip" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <circle cx="9" cy="6" r="1.5" /><circle cx="15" cy="6" r="1.5" /><circle cx="9" cy="12" r="1.5" />
+                    <circle cx="15" cy="12" r="1.5" /><circle cx="9" cy="18" r="1.5" /><circle cx="15" cy="18" r="1.5" />
+                  </svg>
+                }
+                @if (columnToggle()) {
+                  <ui-checkbox
+                    size="sm"
+                    [checked]="!hiddenKeys().has(column.key)"
+                    [disabled]="!canHide(column)"
+                    (changed)="toggleColumn(column.key, $event)"
+                  >{{ column.header }}</ui-checkbox>
+                } @else {
+                  <span class="ui-table__col-label">{{ column.header }}</span>
+                }
+                @if (reorderable()) {
+                  <span class="ui-table__moves">
+                    <button
+                      type="button"
+                      class="ui-table__move"
+                      [attr.data-move]="column.key + '-up'"
+                      [disabled]="first"
+                      [attr.aria-label]="'Monter ' + column.header"
+                      [title]="'Monter ' + column.header"
+                      (click)="onMoveClick(column, -1)"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 15 6-6 6 6" /></svg>
+                    </button>
+                    <button
+                      type="button"
+                      class="ui-table__move"
+                      [attr.data-move]="column.key + '-down'"
+                      [disabled]="last"
+                      [attr.aria-label]="'Descendre ' + column.header"
+                      [title]="'Descendre ' + column.header"
+                      (click)="onMoveClick(column, 1)"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+                    </button>
+                  </span>
+                }
+              </div>
+            }
+            @if (reorderable() && isReordered()) {
+              <button type="button" class="ui-table__tool ui-table__col-reset" (click)="resetColumnOrder()">Réinitialiser l'ordre</button>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+}
+
+<div class="ui-table__scroller" tabindex="0" role="region" [attr.aria-label]="caption() || regionLabel()">
+  <table class="ui-table__table">
+    @if (caption()) {
+      <caption class="ui-table__caption">{{ caption() }}</caption>
+    }
+    <thead>
+      <tr>
+        @for (column of visibleColumns(); track column.key) {
+          <th
+            scope="col"
+            class="ui-table__th"
+            [class]="'ui-table__cell--' + (column.align ?? 'start')"
+            [style.width]="column.width ?? null"
+            [attr.aria-sort]="ariaSort(column)"
+            [class.ui-table__th--draggable]="reorderable()"
+            [class.ui-table__th--drag]="dragKey() === column.key"
+            [class.ui-table__th--drop]="dropKey() === column.key"
+            [attr.draggable]="reorderable() ? 'true' : null"
+            (dragstart)="onDragStart($event, column)"
+            (dragover)="onDragOver($event, column)"
+            (drop)="onDrop($event, column)"
+            (dragend)="onDragEnd()"
+          >
+            @if (column.sortable) {
+              <button type="button" class="ui-table__sort" (click)="toggleSort(column)">
+                <ng-container *ngTemplateOutlet="headerContent; context: { $implicit: column }" />
+                <svg class="ui-table__sort-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                  @if (sort()?.key !== column.key) {
+                    <path d="m7 9 5-5 5 5M7 15l5 5 5-5" />
+                  } @else if (sort()?.direction === 'asc') {
+                    <path d="m7 14 5-5 5 5" />
+                  } @else {
+                    <path d="m7 10 5 5 5-5" />
+                  }
+                </svg>
+              </button>
+            } @else {
+              <ng-container *ngTemplateOutlet="headerContent; context: { $implicit: column }" />
+            }
+          </th>
+        }
+      </tr>
+      @if (hasFilters()) {
+        <tr class="ui-table__filters">
+          @for (column of visibleColumns(); track column.key) {
+            <td class="ui-table__filter">
+              @if (column.filter; as filter) {
+                @switch (filter.type) {
+                  @case ('select') {
+                    <ui-select
+                      size="sm"
+                      [ariaLabel]="'Filtrer ' + column.header"
+                      [placeholder]="filterPlaceholder(filter)"
+                      [options]="filterOptions().get(column.key) ?? []"
+                      [value]="filters()[column.key] ?? null"
+                      (valueChange)="setFilter(column.key, $event)"
+                    />
+                  }
+                  @case ('boolean') {
+                    <ui-select
+                      size="sm"
+                      [ariaLabel]="'Filtrer ' + column.header"
+                      placeholder="Tous"
+                      [options]="booleanOptions(filter)"
+                      [value]="$any(filters()[column.key]) ?? null"
+                      (valueChange)="setFilter(column.key, $event)"
+                    />
+                  }
+                  @default {
+                    @if (filter.type === 'text' && !isAdvanced(filter)) {
+                      <ui-text-field
+                        size="sm"
+                        type="search"
+                        autocomplete="off"
+                        [ariaLabel]="'Filtrer ' + column.header"
+                        [placeholder]="filterPlaceholder(filter)"
+                        [value]="$any(filters()[column.key]) ?? ''"
+                        (valueChange)="setFilter(column.key, $event)"
+                      />
+                    } @else {
+                      <!-- Une seule ligne : un champ (ou un résumé) + un bouton qui ouvre les réglages (popover natif). -->
+                      @let cond = conditionOf(column);
+                      @let arity = operatorArity(cond.op);
+                      @let popId = baseId + '-filter-' + column.key;
+                      <!-- Ancre explicite sur la ligne (toujours présente) : le résumé qui ouvre la fenêtre peut
+                           disparaître quand l'opérateur change ; une ancre implicite serait alors perdue. -->
+                      <div class="ui-table__fline" [style.anchor-name]="anchorName(column)">
+                        @if (arity === 1) {
+                          <ui-text-field
+                            size="sm"
+                            autocomplete="off"
+                            [type]="inputType(filter)"
+                            [ariaLabel]="'Filtrer ' + column.header + ' (' + operatorLabel(cond.op) + ')'"
+                            [placeholder]="filter.type === 'text' ? operatorLabel(cond.op) + '…' : ''"
+                            [value]="conditionText(column, 'value')"
+                            (valueChange)="setConditionValue(column, 'value', $event)"
+                          >
+                            @if (isAdvanced(filter)) {
+                              <span uiPrefix class="ui-table__op" aria-hidden="true">{{ operatorSymbol(cond.op) }}</span>
+                            }
+                          </ui-text-field>
+                        } @else {
+                          <button
+                            type="button"
+                            class="ui-table__fsummary"
+                            [class.ui-table__fsummary--empty]="!isFilterActive(column)"
+                            [attr.popovertarget]="popId"
+                            [attr.aria-label]="'Filtre ' + column.header + ' : ' + summaryText(column) + '. Modifier'"
+                          >
+                            {{ summaryText(column) }}
+                          </button>
+                        }
+                        @if (isAdvanced(filter) || arity === 2) {
+                          <button
+                            type="button"
+                            class="ui-table__fbtn"
+                            [class.ui-table__fbtn--custom]="cond.op !== defaultOperator(column)"
+                            [attr.popovertarget]="popId"
+                            [attr.aria-label]="'Réglages du filtre ' + column.header + ' (' + operatorLabel(cond.op) + ')'"
+                            [title]="'Réglages du filtre : ' + operatorLabel(cond.op)"
+                          >
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                              <path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0" /><circle cx="16" cy="6" r="2" /><circle cx="10" cy="12" r="2" /><circle cx="18" cy="18" r="2" />
+                            </svg>
+                          </button>
+                        }
+                      </div>
+                      <div
+                        class="ui-table__fpop"
+                        popover="auto"
+                        role="dialog"
+                        [id]="popId"
+                        [style.position-anchor]="anchorName(column)"
+                        [attr.aria-label]="'Réglages du filtre ' + column.header"
+                      >
+                        @if (isAdvanced(filter)) {
+                          <ui-select
+                            size="sm"
+                            label="Condition"
+                            [options]="operatorOptions().get(column.key) ?? []"
+                            [value]="cond.op"
+                            (valueChange)="setOperator(column, $event)"
+                          />
+                        }
+                        @if (arity === 1) {
+                          <ui-text-field
+                            size="sm"
+                            autocomplete="off"
+                            [type]="inputType(filter)"
+                            [label]="filter.type === 'date' ? 'Date' : 'Valeur'"
+                            [value]="conditionText(column, 'value')"
+                            (valueChange)="setConditionValue(column, 'value', $event)"
+                          />
+                        } @else if (arity === 2) {
+                          <div class="ui-table__range">
+                            <ui-text-field
+                              size="sm"
+                              [type]="inputType(filter)"
+                              [label]="filter.type === 'date' ? 'Du' : 'Minimum'"
+                              [value]="conditionText(column, 'value')"
+                              (valueChange)="setConditionValue(column, 'value', $event)"
+                            />
+                            <ui-text-field
+                              size="sm"
+                              [type]="inputType(filter)"
+                              [label]="filter.type === 'date' ? 'Au' : 'Maximum'"
+                              [value]="conditionText(column, 'to')"
+                              (valueChange)="setConditionValue(column, 'to', $event)"
+                            />
+                          </div>
+                        }
+                        <div class="ui-table__fpop-actions">
+                          <button type="button" class="ui-table__tool" (click)="setFilter(column.key, null)">Effacer</button>
+                          <button type="button" class="ui-table__tool" [attr.popovertarget]="popId" popovertargetaction="hide">Fermer</button>
+                        </div>
+                      </div>
+                    }
+                  }
+                }
+              }
+            </td>
+          }
+        </tr>
+      }
+    </thead>
+    <tbody>
+      @for (row of pagedRows(); track trackBy()(row, $index); let j = $index) {
+        @let i = pageStart() + j;
+        <tr
+          class="ui-table__row"
+          [attr.tabindex]="clickableRows() ? 0 : null"
+          (click)="onRowActivate(row, i)"
+          (keydown.enter)="onRowActivate(row, i)"
+        >
+          @for (column of visibleColumns(); track column.key) {
+            <td class="ui-table__td" [class]="'ui-table__cell--' + (column.align ?? 'start')">
+              @if (cellTemplates().get(column.key); as cell) {
+                <ng-container
+                  *ngTemplateOutlet="cell; context: { $implicit: row, value: valueOf(row, column), index: i, column: column }"
+                />
+              } @else {
+                {{ display(valueOf(row, column)) }}
+              }
+            </td>
+          }
+        </tr>
+      } @empty {
+        <tr>
+          <td class="ui-table__empty" [attr.colspan]="visibleColumns().length">
+            @if (filtering() && data().length) {
+              Aucune ligne ne correspond à la recherche ou aux filtres.
+              <button type="button" class="ui-table__tool ui-table__tool--inline" (click)="resetFilters()">Réinitialiser</button>
+            } @else if (emptyDef(); as empty) {
+              <ng-container *ngTemplateOutlet="empty.template" />
+            } @else {
+              {{ emptyText() }}
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (paginated()) {
+  <nav class="ui-table__pager" [attr.aria-label]="'Pagination : ' + (caption() || regionLabel())">
+    <span class="ui-table__prange" aria-live="polite">
+      @if (totalCount()) {
+        {{ pageStart() + 1 }}–{{ pageEnd() }} sur {{ totalCount() }}
+      } @else {
+        0 ligne
+      }
+    </span>
+    @if (pageSizeOptions().length) {
+      <span class="ui-table__psize">
+        <span aria-hidden="true">Lignes par page</span>
+        <ui-select
+          size="sm"
+          required
+          ariaLabel="Lignes par page"
+          [options]="pageSizeChoices()"
+          [value]="pageSize()"
+          (valueChange)="setPageSize($event)"
+        />
+      </span>
+    }
+    <span class="ui-table__pages">
+      <button type="button" class="ui-table__page ui-table__page--nav" aria-label="Première page" title="Première page" [disabled]="currentPage() === 1" (click)="goToPage(1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m17 18-6-6 6-6M7 6v12" /></svg>
+      </button>
+      <button type="button" class="ui-table__page ui-table__page--nav" aria-label="Page précédente" title="Page précédente" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+      </button>
+      @for (item of pageItems(); track $index) {
+        @if (item === 0) {
+          <span class="ui-table__gap" aria-hidden="true">…</span>
+        } @else {
+          <button
+            type="button"
+            class="ui-table__page"
+            [class.ui-table__page--current]="item === currentPage()"
+            [attr.aria-current]="item === currentPage() ? 'page' : null"
+            [attr.aria-label]="'Page ' + item"
+            (click)="goToPage(item)"
+          >{{ item }}</button>
+        }
+      }
+      <button type="button" class="ui-table__page ui-table__page--nav" aria-label="Page suivante" title="Page suivante" [disabled]="currentPage() === pageCount()" (click)="goToPage(currentPage() + 1)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+      </button>
+      <button type="button" class="ui-table__page ui-table__page--nav" aria-label="Dernière page" title="Dernière page" [disabled]="currentPage() === pageCount()" (click)="goToPage(pageCount())">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m7 18 6-6-6-6M17 6v12" /></svg>
+      </button>
+    </span>
+  </nav>
+}
+
+<span class="ui-table__sr" aria-live="polite">{{ announcement() }}</span>
+
+<ng-template #headerContent let-column>
+  @if (headerTemplates().get(column.key); as header) {
+    <ng-container *ngTemplateOutlet="header; context: { $implicit: column }" />
+  } @else {
+    {{ column.header }}
+  }
+</ng-template>

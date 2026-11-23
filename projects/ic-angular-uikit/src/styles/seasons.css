@@ -1,0 +1,94 @@
+/*
+ * Thèmes saisonniers « season-light » et « season-dark » : ils reprennent les jetons de light / dark
+ * (voir themes/*.css) et changent la couleur principale et la teinte des fonds selon la saison,
+ * posée par ThemeService dans data-ui-season (winter | spring | summer | autumn).
+ * Contrastes vérifiés : texte ≥ 4,5:1, contours et focus ≥ 3:1, dans les 8 combinaisons.
+ */
+
+/* ---------- Clair ---------- */
+[data-ui-theme='season-light'][data-ui-season='winter'] {
+  --ui-color-bg: #f3f8fb;
+  --ui-color-surface-sunken: #eef5f9;
+  --ui-color-primary: #0e7490;
+  --ui-color-primary-hover: #155e75;
+  --ui-color-primary-subtle: #cffafe;
+  --ui-color-primary-text: #155e75;
+  --ui-color-on-primary: #ffffff;
+  --ui-color-focus-ring: #0e7490;
+}
+[data-ui-theme='season-light'][data-ui-season='spring'] {
+  --ui-color-bg: #f6faf3;
+  --ui-color-surface-sunken: #eff6ec;
+  --ui-color-primary: #be185d;
+  --ui-color-primary-hover: #9d174d;
+  --ui-color-primary-subtle: #fce7f3;
+  --ui-color-primary-text: #9d174d;
+  --ui-color-on-primary: #ffffff;
+  --ui-color-focus-ring: #be185d;
+}
+[data-ui-theme='season-light'][data-ui-season='summer'] {
+  /* Ciel d'été : fond bleu ciel, accents orange soleil. */
+  --ui-color-bg: #e0f2fe;
+  --ui-color-surface-sunken: #eaf6fe;
+  --ui-color-text-subtle: #59697e; /* un cran plus foncé pour rester ≥ 4,5:1 sur le bleu ciel */
+  --ui-color-primary: #c2410c;
+  --ui-color-primary-hover: #9a3412;
+  --ui-color-primary-subtle: #ffedd5;
+  --ui-color-primary-text: #9a3412;
+  --ui-color-on-primary: #ffffff;
+  --ui-color-focus-ring: #c2410c;
+}
+[data-ui-theme='season-light'][data-ui-season='autumn'] {
+  --ui-color-bg: #fbf7f1;
+  --ui-color-surface-sunken: #f6f0e7;
+  --ui-color-primary: #92400e;
+  --ui-color-primary-hover: #78350f;
+  --ui-color-primary-subtle: #fef3c7;
+  --ui-color-primary-text: #78350f;
+  --ui-color-on-primary: #ffffff;
+  --ui-color-focus-ring: #92400e;
+}
+
+/* ---------- Sombre ---------- */
+[data-ui-theme='season-dark'][data-ui-season='winter'] {
+  --ui-color-bg: #08131f;
+  --ui-color-surface-sunken: #060e18;
+  --ui-color-primary: #22d3ee;
+  --ui-color-primary-hover: #67e8f9;
+  --ui-color-primary-subtle: rgb(34 211 238 / 0.16);
+  --ui-color-primary-text: #a5f3fc;
+  --ui-color-on-primary: #083344;
+  --ui-color-focus-ring: #67e8f9;
+}
+[data-ui-theme='season-dark'][data-ui-season='spring'] {
+  --ui-color-bg: #0b140f;
+  --ui-color-surface-sunken: #08100b;
+  --ui-color-primary: #f472b6;
+  --ui-color-primary-hover: #f9a8d4;
+  --ui-color-primary-subtle: rgb(244 114 182 / 0.16);
+  --ui-color-primary-text: #fbcfe8;
+  --ui-color-on-primary: #500724;
+  --ui-color-focus-ring: #f9a8d4;
+}
+/* Nuit d'été : fond bleu nuit (ciel étoilé), accents orange chaud. */
+[data-ui-theme='season-dark'][data-ui-season='summer'] {
+  --ui-color-bg: #0a1430;
+  --ui-color-surface-sunken: #081026;
+  --ui-color-primary: #fb923c;
+  --ui-color-primary-hover: #fdba74;
+  --ui-color-primary-subtle: rgb(251 146 60 / 0.16);
+  --ui-color-primary-text: #fed7aa;
+  --ui-color-on-primary: #431407;
+  --ui-color-focus-ring: #fdba74;
+}
+/* Automne sombre « Forêt & terracotta » : feuillage roux sur sous-bois de conifères. */
+[data-ui-theme='season-dark'][data-ui-season='autumn'] {
+  --ui-color-bg: #0a1410;
+  --ui-color-surface-sunken: #08100c;
+  --ui-color-primary: #ef8354;
+  --ui-color-primary-hover: #f3a37f;
+  --ui-color-primary-subtle: rgb(239 131 84 / 0.16);
+  --ui-color-primary-text: #f9bda1;
+  --ui-color-on-primary: #3b1205;
+  --ui-color-focus-ring: #f3a37f;
+}

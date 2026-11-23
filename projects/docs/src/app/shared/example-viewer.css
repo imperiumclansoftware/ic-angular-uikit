@@ -1,0 +1,50 @@
+:host { display: block; margin-bottom: var(--ui-space-8); }
+.example__header { margin-bottom: var(--ui-space-3); }
+.example__title { margin: 0 0 var(--ui-space-1); font-size: var(--ui-font-size-lg); }
+.example__anchor { margin-left: var(--ui-space-1); color: var(--ui-color-text-subtle); text-decoration: none; font-weight: var(--ui-font-weight-regular); }
+.example__anchor:hover { color: var(--ui-color-primary-text); text-decoration: underline; }
+.example__description { color: var(--ui-color-text-muted); font-size: var(--ui-font-size-sm); }
+
+.example__frame {
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  overflow: hidden;
+  background: var(--ui-color-surface);
+}
+.example__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-bottom: 1px solid var(--ui-color-border);
+  background: var(--ui-color-surface-sunken);
+}
+.example__themes { display: flex; gap: 2px; padding: 2px; border-radius: var(--ui-radius-md); background: var(--ui-color-neutral-subtle); }
+.example__toolbar button {
+  padding: 3px var(--ui-space-3);
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: transparent;
+  color: var(--ui-color-text-muted);
+  font: inherit;
+  font-size: var(--ui-font-size-xs);
+  cursor: pointer;
+}
+.example__toolbar button:hover { color: var(--ui-color-text); }
+.example__toolbar button:focus-visible { outline: 2px solid var(--ui-color-focus-ring); }
+.example__themes .is-active { background: var(--ui-color-surface); color: var(--ui-color-text); box-shadow: var(--ui-shadow-sm); }
+.example__code-toggle { font-weight: var(--ui-font-weight-medium); color: var(--ui-color-primary-text) !important; }
+
+.example__preview {
+  padding: var(--ui-space-6);
+  background:
+    radial-gradient(circle at 1px 1px, var(--ui-color-border) 1px, transparent 0) 0 0 / 16px 16px,
+    var(--ui-color-bg);
+  overflow-x: auto;
+}
+.example__split { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.example__split .example__preview + .example__preview { border-left: 1px solid var(--ui-color-border); }
+
+.example__code { border-top: 1px solid var(--ui-color-border); }

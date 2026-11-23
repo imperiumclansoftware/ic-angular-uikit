@@ -1,0 +1,50 @@
+/*
+ * Habillage commun des champs de formulaire (text-field, textarea, select).
+ * Classes d'hôte : ui-field, ui-field--sm|md|lg, ui-field--invalid|valid|pending, ui-field--disabled, ui-field--focused.
+ * Les messages (erreur, aide, compteur) sont rendus par ui-field-message.
+ */
+:host {
+  --_height: var(--ui-control-height-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text);
+}
+:host(.ui-field--sm) { --_height: var(--ui-control-height-sm); font-size: var(--ui-font-size-xs); }
+:host(.ui-field--lg) { --_height: var(--ui-control-height-lg); font-size: var(--ui-font-size-md); }
+
+.ui-field__label { font-weight: var(--ui-font-weight-medium); }
+.ui-field__required { color: var(--ui-color-danger); margin-left: 2px; }
+
+.ui-field__control {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  min-height: var(--_height);
+  padding: 0 var(--ui-space-3);
+  box-sizing: border-box;
+  border: 1px solid var(--ui-color-border-control);
+  border-radius: var(--ui-field-radius, var(--ui-radius-md));
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text-subtle);
+  transition: border-color var(--ui-duration-fast) var(--ui-easing), box-shadow var(--ui-duration-fast) var(--ui-easing);
+}
+.ui-field__control:hover { border-color: var(--ui-color-text-muted); }
+:host(.ui-field--focused) .ui-field__control {
+  border-color: var(--ui-color-focus-ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-color-focus-ring) 25%, transparent);
+}
+:host(.ui-field--invalid) .ui-field__control { border-color: var(--ui-color-danger); }
+:host(.ui-field--invalid.ui-field--focused) .ui-field__control {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-color-danger) 25%, transparent);
+}
+:host(.ui-field--valid) .ui-field__control { border-color: var(--ui-color-success); }
+:host(.ui-field--valid.ui-field--focused) .ui-field__control {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ui-color-success) 25%, transparent);
+}
+:host(.ui-field--pending) .ui-field__control { border-style: dashed; }
+/* L'état valide n'est pas signalé par la seule couleur : icône ✓ dans le champ. */
+.ui-field__status-icon { flex: none; width: 1rem; height: 1rem; color: var(--ui-color-success-text); }
+:host(.ui-field--disabled) .ui-field__control { background: var(--ui-color-surface-sunken); opacity: 0.7; }
+

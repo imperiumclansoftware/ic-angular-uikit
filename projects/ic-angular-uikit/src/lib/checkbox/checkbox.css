@@ -1,0 +1,68 @@
+:host {
+  --_size: 1.125rem;
+  --_on: var(--ui-checkbox-color, var(--ui-color-primary));
+  --_on-fg: var(--ui-color-on-primary);
+  display: inline-flex;
+  flex-direction: column;
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text);
+}
+:host(.ui-checkbox--sm) { --_size: 1rem; font-size: var(--ui-font-size-xs); }
+:host(.ui-checkbox--lg) { --_size: 1.375rem; font-size: var(--ui-font-size-md); }
+
+/* Toute la ligne est cliquable ; zone d'interaction d'au moins 44 px de haut. */
+.ui-checkbox__row {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--ui-space-3);
+  min-block-size: 44px;
+  padding-block: calc((44px - 1.5em) / 2);
+  box-sizing: border-box;
+  cursor: pointer;
+}
+:host(.ui-checkbox--disabled) .ui-checkbox__row { cursor: not-allowed; opacity: 0.55; }
+
+.ui-checkbox__input {
+  appearance: none;
+  display: inline-grid;
+  place-content: center;
+  flex: none;
+  inline-size: var(--_size);
+  aspect-ratio: 1;
+  margin: calc((1.5em - var(--_size)) / 2) 0 0;
+  border: 2px solid var(--ui-color-border-control);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-surface);
+  cursor: inherit;
+  transition: background-color var(--ui-duration-fast) var(--ui-easing), border-color var(--ui-duration-fast) var(--ui-easing);
+}
+.ui-checkbox__input::before {
+  content: '';
+  inline-size: calc(var(--_size) * 0.7);
+  aspect-ratio: 1;
+  background-color: var(--_on-fg);
+  mask: var(--_icon) no-repeat center / contain;
+  scale: 0;
+  transition: scale var(--ui-duration-fast) var(--ui-easing);
+}
+.ui-checkbox__input:checked {
+  --_icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
+}
+.ui-checkbox__input:indeterminate {
+  --_icon: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='4.5' stroke-linecap='round'><line x1='5' y1='12' x2='19' y2='12'/></svg>");
+}
+.ui-checkbox__input:is(:checked, :indeterminate) { background: var(--_on); border-color: var(--_on); }
+.ui-checkbox__input:is(:checked, :indeterminate)::before { scale: 1; }
+.ui-checkbox__row:hover .ui-checkbox__input:not(:disabled, :checked, :indeterminate) { border-color: var(--ui-color-text-muted); }
+.ui-checkbox__input:focus-visible { outline: 2px solid var(--ui-color-focus-ring); outline-offset: 2px; }
+/* Plus spécifique que la règle :hover ci-dessus : l'état invalide reste visible au survol. */
+:host(.ui-checkbox--invalid) .ui-checkbox__row .ui-checkbox__input:not(:checked, :indeterminate) { border-color: var(--ui-color-danger); }
+
+@media (forced-colors: active) {
+  .ui-checkbox__input::before { background-color: CanvasText; }
+}
+
+.ui-checkbox__text { display: flex; flex-direction: column; }
+.ui-checkbox__label:empty { display: none; }
+.ui-checkbox__message { margin: calc(-1 * var(--ui-space-2)) 0 var(--ui-space-1) calc(var(--_size) + var(--ui-space-3)); }
+.ui-checkbox__description { color: var(--ui-color-text-muted); font-size: var(--ui-font-size-xs); }

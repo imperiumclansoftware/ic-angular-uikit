@@ -1,0 +1,163 @@
+<article class="doc-page">
+  <p class="doc-page__eyebrow">Guide</p>
+  <h1 class="doc-page__title">Thèmes</h1>
+  <p class="doc-page__lead">
+    Les composants ne contiennent aucune couleur en dur : ils lisent des jetons CSS
+    (<code class="doc-inline-code">--ui-color-*</code>, <code class="doc-inline-code">--ui-shadow-*</code>).
+    Un thème est simplement un jeu de valeurs pour ces jetons, activé par l'attribut
+    <code class="doc-inline-code">data-ui-theme</code>.
+  </p>
+
+  <h2 id="switch">Changer de thème</h2>
+  <p>
+    <code class="doc-inline-code">ThemeService</code> pose <code class="doc-inline-code">data-ui-theme</code> sur
+    <code class="doc-inline-code">&lt;html&gt;</code>, suit <code class="doc-inline-code">prefers-color-scheme</code> en mode
+    <code class="doc-inline-code">system</code> et mémorise la préférence.
+  </p>
+  <div class="demo">
+    <div class="demo__row">
+      @for (theme of ['light', 'dark', 'system']; track theme) {
+        <button uiButton size="sm" [variant]="themeService.preference() === theme ? 'primary' : 'outline'" (click)="themeService.setTheme(theme)">
+          {{ theme }}
+        </button>
+      }
+    </div>
+    <p class="demo__state">
+      Préférence : <code class="doc-inline-code">{{ themeService.preference() }}</code> · thème appliqué :
+      <code class="doc-inline-code">{{ themeService.theme() }}</code>
+    </p>
+  </div>
+  <doc-code filename="theme-toggle.ts" [code]="serviceSnippet" />
+
+  <h2 id="subtree">Thémer une zone</h2>
+  <p>L'attribut fonctionne sur n'importe quel élément : ses descendants utilisent alors ce thème.</p>
+  <div class="subtree">
+    <div class="subtree__pane" data-ui-theme="light">
+      <ui-alert tone="success" title="data-ui-theme=&quot;light&quot;">Ce panneau est toujours clair.</ui-alert>
+    </div>
+    <div class="subtree__pane" data-ui-theme="dark">
+      <ui-alert tone="success" title="data-ui-theme=&quot;dark&quot;">Ce panneau est toujours sombre.</ui-alert>
+    </div>
+  </div>
+  <doc-code language="html" [code]="subtreeSnippet" />
+
+  <h2 id="seasons">Thèmes saisonniers</h2>
+  <p>
+    <code class="doc-inline-code">season-light</code> et <code class="doc-inline-code">season-dark</code> reprennent les thèmes clair et sombre
+    et changent de couleurs selon la saison, calculée d'après la date du jour (printemps au 20 mars, été au 21 juin, automne au 22 septembre,
+    hiver au 21 décembre ; inversé avec <code class="doc-inline-code">hemisphere: 'south'</code>). Le composant
+    <a routerLink="/components/season-effects">ui-season-effects</a> ajoute les animations : neige, fleurs, soleil, feuilles.
+  </p>
+  <div class="demo">
+    <p class="demo__state">
+      Aujourd'hui ({{ today }}) : <strong>{{ todayLabel }}</strong>
+      @if (previewed()) {
+        · aperçu : <strong>{{ seasonLabel() }}</strong>
+      }
+      @if (themeService.isSeasonal()) {
+        · thème saisonnier actif
+      }
+    </p>
+    <div class="demo__row">
+      <button uiButton size="sm" icon="lucide:sun" [variant]="themeService.preference() === 'season-light' ? 'primary' : 'outline'" (click)="themeService.setTheme('season-light')">season-light</button>
+      <button uiButton size="sm" icon="lucide:star" [variant]="themeService.preference() === 'season-dark' ? 'primary' : 'outline'" (click)="themeService.setTheme('season-dark')">season-dark</button>
+      <button uiButton size="sm" variant="ghost" (click)="themeService.setTheme('system')">Revenir au thème système</button>
+    </div>
+    <div class="demo__row" role="group" aria-label="Prévisualiser une saison">
+      <span class="demo__label">Prévisualiser :</span>
+      @for (s of seasons; track s.id) {
+        <button uiButton size="sm" [variant]="previewed() === s.id ? 'secondary' : 'ghost'" [attr.aria-pressed]="previewed() === s.id" (click)="preview(s.id)">{{ s.label }}</button>
+      }
+      <button uiButton size="sm" variant="ghost" [attr.aria-pressed]="previewed() === null" (click)="preview(null)">Date du jour</button>
+    </div>
+    <ui-switch [checked]="themeService.seasonEffects()" (changed)="themeService.setSeasonEffects($event)">Animations saisonnières</ui-switch>
+  </div>
+
+  <div class="tokens" tabindex="0" role="region" aria-label="Palettes saisonnières">
+    <table>
+      <thead><tr><th scope="col">Saison</th><th scope="col">season-light</th><th scope="col">season-dark</th></tr></thead>
+      <tbody>
+        @for (s of seasons; track s.id) {
+          <tr>
+            <th scope="row">{{ s.label }}</th>
+            @for (mode of ['light', 'dark']; track mode) {
+              <td>
+                <span class="season-sample" [attr.data-ui-theme]="'season-' + mode" [attr.data-ui-season]="s.id">
+                  <button uiButton size="sm" tabindex="-1">Bouton</button>
+                  <code>{{ primaryOf(mode, s.id) }}</code>
+                </span>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <doc-code [code]="seasonConfigSnippet" />
+
+  <h2 id="custom">Créer un thème</h2>
+  <p>
+    Déclarez un nouveau jeu de valeurs sous un sélecteur d'attribut, puis déclarez-le auprès de <code class="doc-inline-code">provideUiKit</code>.
+    Nommez les thèmes sombres <code class="doc-inline-code">…-dark</code> : <code class="doc-inline-code">ThemeService.isDark()</code> les reconnaît, et vos propres
+    styles peuvent cibler tous les thèmes sombres avec <code class="doc-inline-code">[data-ui-theme$='dark']</code> (dark, season-dark, ocean-dark…).
+  </p>
+  <doc-code language="css" filename="ocean.css" [code]="customSnippet" />
+  <doc-code [code]="customConfigSnippet" />
+  <p>Pour un simple ajustement, surchargez un jeton global ou une variable de composant (listées dans l'onglet API de chaque composant) :</p>
+  <doc-code language="css" [code]="overrideSnippet" />
+
+  <h2 id="tokens">Jetons de couleur</h2>
+  <div class="tokens" tabindex="0" role="region" aria-label="Jetons de couleur par thème">
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">Jeton</th>
+          @for (theme of tokens.themes; track theme) {
+            <th scope="col">{{ theme }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (token of tokens.color; track token.name) {
+          <tr>
+            <td><code>{{ token.name }}</code></td>
+            @for (theme of tokens.themes; track theme) {
+              <td>
+                <span class="tokens__value" [attr.data-ui-theme]="theme">
+                  @if (isColor(token.values[theme])) {
+                    <span class="tokens__swatch" [style.background]="token.values[theme]"></span>
+                  } @else if (token.name.startsWith('--ui-shadow')) {
+                    <span class="tokens__swatch tokens__swatch--shadow" [style.box-shadow]="token.values[theme]"></span>
+                  }
+                  <code>{{ token.values[theme] }}</code>
+                </span>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="base-tokens">Jetons communs</h2>
+  <p>Espacements, rayons, typographie et durées : identiques pour tous les thèmes.</p>
+  <div class="tokens" tabindex="0" role="region" aria-label="Jetons communs">
+    <table>
+      <thead><tr><th scope="col">Jeton</th><th scope="col">Valeur</th></tr></thead>
+      <tbody>
+        @for (token of tokens.base; track token.name) {
+          <tr><td><code>{{ token.name }}</code></td><td><code>{{ token.value }}</code></td></tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <h2 id="api">API</h2>
+  @for (entry of coreEntries; track entry.name) {
+    <doc-api [entry]="entry" />
+  }
+  @for (type of coreTypes; track type.name) {
+    <h3 class="type-name">{{ type.name }}</h3>
+    <doc-code [code]="type.code" />
+  }
+</article>

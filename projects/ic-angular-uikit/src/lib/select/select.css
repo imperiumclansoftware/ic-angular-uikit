@@ -1,0 +1,88 @@
+.ui-select__control { position: relative; padding: 0; }
+.ui-select__icon { margin-left: var(--ui-space-3); }
+.ui-select__icon + .ui-select__native { padding-left: var(--ui-space-2); }
+
+.ui-select__native {
+  flex: 1;
+  min-width: 0;
+  height: calc(var(--_height) - 2px);
+  padding: 0 2.25rem 0 var(--ui-space-3);
+  border: 0;
+  outline: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--ui-color-text);
+  font: inherit;
+  cursor: pointer;
+  /* Repli (Firefox…) : boîte fermée stylée, liste native ; flèche fournie par .ui-select__arrow. */
+  appearance: none;
+}
+.ui-select__native:disabled { cursor: not-allowed; }
+.ui-select__native:has(.ui-select__placeholder:checked) { color: var(--ui-color-text-subtle); }
+
+.ui-select__control .ui-field__status-icon { margin-right: var(--ui-space-3); }
+.ui-select__control:has(.ui-field__status-icon) .ui-select__arrow { right: 2.25rem; }
+.ui-select__arrow {
+  position: absolute;
+  right: var(--ui-space-3);
+  width: 1rem;
+  height: 1rem;
+  pointer-events: none;
+  color: var(--ui-color-text-subtle);
+}
+
+/* Select personnalisable : liste stylée, options riches (Chrome/Edge 135+, Safari 27+). */
+@supports (appearance: base-select) {
+  .ui-select__arrow { display: none; }
+
+  .ui-select__native,
+  .ui-select__native::picker(select) {
+    appearance: base-select;
+  }
+
+  .ui-select__native {
+    display: flex;
+    align-items: center;
+    padding: 0 var(--ui-space-3);
+    width: 100%;
+  }
+  .ui-select__native::picker-icon {
+    color: var(--ui-color-text-subtle);
+    transition: rotate var(--ui-duration-normal) var(--ui-easing);
+  }
+  .ui-select__native:open::picker-icon { rotate: 180deg; }
+
+  .ui-select__native::picker(select) {
+    margin-block: var(--ui-space-1);
+    padding: var(--ui-space-1);
+    border: 1px solid var(--ui-color-border);
+    border-radius: var(--ui-radius-md);
+    background: var(--ui-color-surface-raised);
+    color: var(--ui-color-text);
+    box-shadow: var(--ui-shadow-lg);
+    min-width: anchor-size(width);
+    max-height: 18rem;
+  }
+
+  .ui-select__native option {
+    display: flex;
+    align-items: center;
+    gap: var(--ui-space-2);
+    padding: var(--ui-space-2) var(--ui-space-3);
+    border-radius: var(--ui-radius-sm);
+    font-size: var(--ui-font-size-sm);
+    cursor: pointer;
+  }
+  .ui-select__native option:hover,
+  .ui-select__native option:focus-visible { background: var(--ui-color-hover); outline: none; }
+  /* Deux indicateurs pour l'option choisie : fond teinté + coche (et graisse). */
+  .ui-select__native option:checked {
+    background: var(--ui-color-primary-subtle);
+    color: var(--ui-color-primary-text);
+    font-weight: var(--ui-font-weight-medium);
+  }
+  .ui-select__native option::checkmark { order: 1; margin-left: auto; color: var(--ui-color-primary-text); }
+  .ui-select__native option:disabled { color: var(--ui-color-text-disabled); cursor: not-allowed; }
+  .ui-select__native .ui-select__placeholder { color: var(--ui-color-text-subtle); }
+  .ui-select__native optgroup { font-size: var(--ui-font-size-xs); font-weight: var(--ui-font-weight-bold); color: var(--ui-color-text-subtle); padding-top: var(--ui-space-2); }
+}

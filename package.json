@@ -1,12 +1,17 @@
 {
-  "name": "ui-kit",
+  "name": "ic-angular-uikit",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "docs:gen": "node tools/generate-docs.mjs",
+    "start": "node tools/generate-docs.mjs && concurrently -k -n gen,docs \"node tools/generate-docs.mjs --watch\" \"ng serve docs\"",
+    "build": "npm run build:lib && npm run build:docs",
+    "build:lib": "cp LICENSE CHANGELOG.md projects/ic-angular-uikit/ && ng build ic-angular-uikit",
+    "build:docs": "node tools/generate-docs.mjs && ng build docs",
+    "test": "ng test ic-angular-uikit",
+    "lint": "ng lint",
+    "start:code-server": "node tools/generate-docs.mjs && concurrently -k -n gen,docs \"node tools/generate-docs.mjs --watch\" \"ng serve docs --configuration code-server\"",
+    "start:proxy": "node tools/generate-docs.mjs && concurrently -k -n gen,build,serve \"node tools/generate-docs.mjs --watch\" \"ng build docs --configuration development,proxy --watch\" \"node tools/serve-static.mjs 4220 0.0.0.0\""
   },
   "private": true,
   "packageManager": "npm@11.19.0",
@@ -21,9 +26,29 @@
     "tslib": "^2.3.0"
   },
   "devDependencies": {
+    "@angular/build": "^22.2.7",
     "@angular/cli": "^22.2.2",
     "@angular/compiler-cli": "^22.2.0",
+    "@eslint/js": "^10.0.1",
+    "@fortawesome/fontawesome-free": "^7.3.1",
+    "@fortawesome/free-brands-svg-icons": "^7.3.1",
+    "@fortawesome/free-solid-svg-icons": "^7.3.1",
+    "angular-eslint": "^22.6.0",
+    "bootstrap-icons": "^1.13.2",
+    "concurrently": "^10.0.7",
+    "eslint": "^10.15.0",
+    "jsdom": "^30.0.0",
+    "lucide": "^1.75.0",
+    "material-symbols": "^0.49.0",
+    "ng-packagr": "^22.2.0",
     "prettier": "^3.8.1",
-    "typescript": "~6.0.2"
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/imperiumclansoftware/ic-angular-uikit.git"
   }
 }

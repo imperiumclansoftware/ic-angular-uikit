@@ -1,0 +1,94 @@
+@if (visible()) {
+  @if (active()) {
+    <div class="fx" [class]="'fx fx--' + currentSeason()" [class.fx--contained]="contained()" aria-hidden="true">
+      @switch (currentSeason()) {
+        @case ('winter') {
+          @for (p of particles(); track p.id) {
+            <span
+              class="flake"
+              [style.left.%]="p.x"
+              [style.width.px]="p.size"
+              [style.height.px]="p.size"
+              [style.--d.s]="p.duration"
+              [style.--delay.s]="p.delay"
+              [style.--drift.px]="p.drift"
+            ></span>
+          }
+        }
+        @case ('autumn') {
+          @for (p of particles(); track p.id) {
+            <span class="leaf" [style.left.%]="p.x" [style.--d.s]="p.duration" [style.--delay.s]="p.delay" [style.--drift.px]="p.drift">
+              <svg [attr.width]="p.size" [attr.height]="p.size" viewBox="0 0 24 24">
+                <path [attr.fill]="p.color" d="M12 2c3 3 7 4 9 9-2 6-7 9-9 11-2-2-7-5-9-11 2-5 6-6 9-9Z" />
+                <path d="M12 4v18M12 10l-4 3M12 14l4-3" stroke="rgb(0 0 0 / 0.25)" stroke-width="1" fill="none" />
+              </svg>
+            </span>
+          }
+        }
+        @case ('summer') {
+          @if (night()) {
+            <!-- Nuit d'été : étoiles qui scintillent, étoile filante, croissant de lune -->
+            @for (p of particles(); track p.id) {
+              @if (p.id % 6 === 0) {
+                <svg class="star star--sparkle" [style.left.%]="p.x" [style.top.%]="p.y" [style.--d.s]="p.duration / 3" [style.--delay.s]="p.delay / 3" [attr.width]="p.size" [attr.height]="p.size" viewBox="0 0 24 24">
+                  <path d="M12 0c.6 6.4 5.6 11.4 12 12-6.4.6-11.4 5.6-12 12-.6-6.4-5.6-11.4-12-12C6.4 11.4 11.4 6.4 12 0Z" />
+                </svg>
+              } @else {
+                <span class="star" [style.left.%]="p.x" [style.top.%]="p.y" [style.--d.s]="p.duration / 3" [style.--delay.s]="p.delay / 3" [style.width.px]="1 + (p.id % 3)" [style.height.px]="1 + (p.id % 3)"></span>
+              }
+            }
+            <span class="shooting"></span>
+            <div class="moon">
+              <svg viewBox="0 0 120 120">
+                <path class="moon__body" d="M78 16a46 46 0 1 0 26 66A38 38 0 1 1 78 16Z" />
+              </svg>
+            </div>
+          } @else {
+          <div class="sun">
+            <svg viewBox="0 0 200 200">
+              <g class="rays">
+                @for (i of [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]; track i) {
+                  <rect x="96" y="6" width="8" height="34" rx="4" [attr.transform]="'rotate(' + i * 30 + ' 100 100)'" />
+                }
+              </g>
+              <circle class="core" cx="100" cy="100" r="46" />
+            </svg>
+          </div>
+          @for (p of particles(); track p.id) {
+            <span class="glint" [style.left.%]="p.x" [style.--d.s]="p.duration" [style.--delay.s]="p.delay"></span>
+          }
+          }
+        }
+        @case ('spring') {
+          @for (p of particles(); track p.id) {
+            <span class="flower" [style.left.%]="p.x" [style.--h.px]="p.height" [style.--delay.s]="-p.delay / 6" [style.--d.s]="p.duration">
+              <svg class="stem" [attr.height]="p.height" width="12" [attr.viewBox]="'0 0 12 ' + p.height" preserveAspectRatio="none">
+                <path [attr.d]="'M6 ' + p.height + ' Q2 ' + p.height / 2 + ' 6 0'" />
+                <path class="leaf-s" [attr.d]="'M6 ' + p.height * 0.6 + ' q5 -6 6 -2 q-3 3 -6 2Z'" />
+              </svg>
+              <svg class="bloom" [attr.width]="p.size * 2" [attr.height]="p.size * 2" viewBox="0 0 24 24">
+                @for (a of [0, 72, 144, 216, 288]; track a) {
+                  <ellipse cx="12" cy="6.5" rx="3.6" ry="5.5" [attr.fill]="p.color" [attr.transform]="'rotate(' + a + ' 12 12)'" />
+                }
+                <circle cx="12" cy="12" r="3" fill="#f59e0b" />
+              </svg>
+            </span>
+          }
+        }
+      }
+    </div>
+  }
+  @if (showControl()) {
+    <button
+      type="button"
+      class="fx-control"
+      [class.fx-control--contained]="contained()"
+      [class.fx-control--left]="controlPosition() === 'bottom-left'"
+      [attr.aria-pressed]="theme.seasonEffects()"
+      (click)="toggle()"
+    >
+      <span aria-hidden="true">{{ theme.seasonEffects() ? '❚❚' : '▶' }}</span>
+      Animations « {{ label() }} »
+    </button>
+  }
+}

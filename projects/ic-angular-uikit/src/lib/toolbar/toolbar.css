@@ -1,0 +1,14 @@
+:host {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-toolbar-gap, var(--ui-space-1));
+  min-width: 0;
+  padding: var(--ui-space-1);
+  border-radius: var(--ui-radius-md);
+}
+:host(.ui-toolbar--nowrap) { flex-wrap: nowrap; overflow-x: auto; }
+:host(.ui-toolbar--vertical) { flex-direction: column; flex-wrap: nowrap; align-items: stretch; width: max-content; }
+:host(.ui-toolbar--outlined) { border: 1px solid var(--ui-color-border-strong); background: var(--ui-color-surface); }
+:host(.ui-toolbar--filled) { background: var(--ui-color-surface-sunken); }
+

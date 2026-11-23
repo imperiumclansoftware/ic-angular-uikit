@@ -1,0 +1,22 @@
+.demo { padding: var(--ui-space-4); border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-lg); background: var(--ui-color-surface); }
+.demo__row { display: flex; gap: var(--ui-space-2); flex-wrap: wrap; }
+.demo__state { margin: var(--ui-space-3) 0 0; font-size: var(--ui-font-size-sm); color: var(--ui-color-text-muted); }
+.subtree { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-lg); overflow: hidden; }
+.subtree__pane { padding: var(--ui-space-5); }
+.tokens:focus-visible { outline: 2px solid var(--ui-color-focus-ring); outline-offset: 2px; }
+.tokens { overflow-x: auto; border: 1px solid var(--ui-color-border); border-radius: var(--ui-radius-md); }
+.tokens table { width: 100%; border-collapse: collapse; font-size: var(--ui-font-size-xs); }
+.tokens th, .tokens td { padding: var(--ui-space-2) var(--ui-space-3); border-bottom: 1px solid var(--ui-color-border); text-align: start; white-space: nowrap; }
+.tokens th { background: var(--ui-color-surface-sunken); text-transform: capitalize; }
+.tokens tbody tr:last-child td { border-bottom: 0; }
+.tokens__value { display: inline-flex; align-items: center; gap: var(--ui-space-2); padding: 2px var(--ui-space-2) 2px 2px; border-radius: var(--ui-radius-sm); }
+.tokens__swatch { width: 1.4rem; height: 1.4rem; border-radius: var(--ui-radius-sm); border: 1px solid var(--ui-color-border); flex: none; }
+.tokens__swatch--shadow { background: var(--ui-color-surface); border: 0; }
+.type-name { font-family: var(--ui-font-family-mono); font-size: var(--ui-font-size-md); }
+.demo__row + .demo__row, .demo__row + ui-switch { margin-top: var(--ui-space-3); }
+.demo__row { align-items: center; }
+.demo__label { font-size: var(--ui-font-size-sm); color: var(--ui-color-text-muted); }
+.demo ui-switch { display: flex; margin-top: var(--ui-space-2); }
+.season-sample { display: inline-flex; align-items: center; gap: var(--ui-space-2); padding: var(--ui-space-2); border-radius: var(--ui-radius-md); }
+.season-sample code { font-size: var(--ui-font-size-xs); }
+.tokens + doc-code { margin-top: var(--ui-space-4); }

@@ -1,0 +1,132 @@
+<article class="api" [id]="'api-' + entry().name">
+  <header class="api__header">
+    <h3 class="api__name">{{ entry().name }}</h3>
+    <ui-badge tone="neutral">{{ kindLabel() }}</ui-badge>
+    @for (selector of selectors(); track selector) {
+      <code class="api__selector">{{ selector }}</code>
+    }
+    @if (entry().exportAs) {
+      <code class="api__selector">exportAs: {{ entry().exportAs }}</code>
+    }
+  </header>
+  @if (entry().description) {
+    <doc-markdown class="api__description" [text]="entry().description" />
+  }
+  @if (entry().signature) {
+    <code class="api__signature">{{ entry().signature }}</code>
+  }
+
+  @if (inputs().length) {
+    <h4>Propriétés (inputs)</h4>
+    <div class="api__table-wrap" tabindex="0" role="region" [attr.aria-label]="entry().name + ' : propriétés'">
+      <table class="api__table">
+        <thead><tr><th scope="col">Nom</th><th scope="col">Type</th><th scope="col">Défaut</th><th scope="col">Description</th></tr></thead>
+        <tbody>
+          @for (row of inputs(); track row.name) {
+            <tr>
+              <td class="api__cell-name">
+                <code>{{ row.twoWay ? '[(' + row.name + ')]' : '[' + row.name + ']' }}</code>
+                @if (row.required) { <ui-badge tone="danger" appearance="outline">requis</ui-badge> }
+                @if (row.twoWay) { <ui-badge tone="primary">model</ui-badge> }
+                @if (row.from) { <a class="api__from" routerLink="/validation" [title]="'Fourni par ' + row.from">validation</a> }
+              </td>
+              <td><code class="api__type">{{ row.type }}</code></td>
+              <td>@if (row.default !== undefined) { <code>{{ row.default }}</code> } @else { <span class="api__none">—</span> }</td>
+              <td>
+                @if (row.deprecated !== undefined) { <ui-badge tone="warning">déprécié</ui-badge> }
+                <doc-markdown [text]="row.description" />
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (outputs().length) {
+    <h4>Événements (outputs)</h4>
+    <div class="api__table-wrap" tabindex="0" role="region" [attr.aria-label]="entry().name + ' : événements'">
+      <table class="api__table">
+        <thead><tr><th scope="col">Nom</th><th scope="col">Payload <code>$event</code></th><th scope="col">Description</th></tr></thead>
+        <tbody>
+          @for (row of outputs(); track row.name) {
+            <tr>
+              <td class="api__cell-name"><code>({{ row.name }})</code></td>
+              <td><code class="api__type">{{ row.type }}</code></td>
+              <td><doc-markdown [text]="row.description" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (entry().properties.length) {
+    <h4>Propriétés publiques</h4>
+    <div class="api__table-wrap" tabindex="0" role="region" [attr.aria-label]="entry().name + ' : propriétés publiques'">
+      <table class="api__table">
+        <thead><tr><th scope="col">Nom</th><th scope="col">Type</th><th scope="col">Description</th></tr></thead>
+        <tbody>
+          @for (row of entry().properties; track row.name) {
+            <tr>
+              <td class="api__cell-name"><code>{{ row.name }}</code></td>
+              <td><code class="api__type">{{ row.type }}</code></td>
+              <td><doc-markdown [text]="row.description" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (entry().methods.length) {
+    <h4>Méthodes</h4>
+    <div class="api__table-wrap" tabindex="0" role="region" [attr.aria-label]="entry().name + ' : méthodes'">
+      <table class="api__table">
+        <thead><tr><th scope="col">Signature</th><th scope="col">Description</th></tr></thead>
+        <tbody>
+          @for (row of entry().methods; track row.name) {
+            <tr>
+              <td class="api__cell-name"><code class="api__type">{{ row.signature }}</code></td>
+              <td><doc-markdown [text]="row.description" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (entry().slots.length) {
+    <h4>Emplacements de contenu (slots &amp; templates)</h4>
+    <div class="api__table-wrap" tabindex="0" role="region" [attr.aria-label]="entry().name + ' : emplacements de contenu'">
+      <table class="api__table">
+        <thead><tr><th scope="col">Sélecteur</th><th scope="col">Description</th></tr></thead>
+        <tbody>
+          @for (row of entry().slots; track row.name) {
+            <tr>
+              <td class="api__cell-name"><code>{{ row.name === 'default' ? '(contenu par défaut)' : row.name }}</code></td>
+              <td><doc-markdown [text]="row.description" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  @if (entry().cssProperties.length) {
+    <h4>Variables CSS</h4>
+    <div class="api__table-wrap" tabindex="0" role="region" [attr.aria-label]="entry().name + ' : variables CSS'">
+      <table class="api__table">
+        <thead><tr><th scope="col">Variable</th><th scope="col">Description</th></tr></thead>
+        <tbody>
+          @for (row of entry().cssProperties; track row.name) {
+            <tr>
+              <td class="api__cell-name"><code>{{ row.name }}</code></td>
+              <td><doc-markdown [text]="row.description" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</article>

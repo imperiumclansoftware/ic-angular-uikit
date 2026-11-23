@@ -1,0 +1,54 @@
+:host {
+  --_w: 2.5rem;
+  --_h: 1.4rem;
+  --_on: var(--ui-switch-on-color, var(--ui-color-primary));
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--ui-space-3);
+  /* Zone d'interaction d'au moins 44 px de haut. */
+  min-block-size: 44px;
+  padding-block: calc((44px - 1.5em) / 2);
+  box-sizing: border-box;
+  font-size: var(--ui-font-size-sm);
+  color: var(--ui-color-text);
+}
+:host(.ui-switch--sm) { --_w: 2rem; --_h: 1.15rem; }
+:host(.ui-switch--lg) { --_w: 3rem; --_h: 1.7rem; font-size: var(--ui-font-size-md); }
+:host(.ui-switch--label-start) { flex-direction: row-reverse; }
+:host(.ui-switch--disabled) { opacity: 0.55; }
+
+.ui-switch__track {
+  position: relative;
+  flex: none;
+  width: var(--_w);
+  height: var(--_h);
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-radius-full);
+  background: var(--ui-color-border-control);
+  cursor: pointer;
+  transition: background-color var(--ui-duration-normal) var(--ui-easing);
+}
+.ui-switch__track[aria-checked='true'] { background: var(--_on); }
+.ui-switch__track:focus-visible { outline: 2px solid var(--ui-color-focus-ring); outline-offset: 2px; }
+.ui-switch__track:disabled { cursor: not-allowed; }
+
+.ui-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: calc(var(--_h) - 4px);
+  height: calc(var(--_h) - 4px);
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--ui-shadow-sm);
+  transition: transform var(--ui-duration-normal) var(--ui-easing);
+}
+.ui-switch__track[aria-checked='true'] .ui-switch__thumb { transform: translateX(calc(var(--_w) - var(--_h))); }
+
+.ui-switch__text { display: flex; flex-direction: column; padding-top: calc((var(--_h) - 1.5em) / 2); }
+.ui-switch__label { cursor: pointer; }
+.ui-switch__label:empty { display: none; }
+:host(.ui-switch--disabled) .ui-switch__label { cursor: not-allowed; }
+:host(.ui-switch--invalid) .ui-switch__track[aria-checked='false'] { box-shadow: 0 0 0 2px var(--ui-color-danger); }
+.ui-switch__description { color: var(--ui-color-text-muted); font-size: var(--ui-font-size-xs); }

@@ -1,0 +1,157 @@
+/* Combinateurs enfants partout : un ui-submenu contient d'autres ui-submenu (même attribut d'encapsulation). */
+:host { display: flex; flex-direction: column; min-width: 0; }
+
+/* ---------- Bouton (même apparence qu'un uiMenuItem) ---------- */
+:host > .ui-submenu__trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+  width: 100%;
+  min-height: 2.5rem;
+  padding: 0 var(--ui-space-3);
+  border: 0;
+  border-radius: var(--ui-radius-md);
+  background: transparent;
+  color: var(--ui-menu-color, var(--ui-color-text-muted));
+  font: inherit;
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-medium);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+:host > .ui-submenu__trigger:hover,
+:host(.ui-submenu--open) > .ui-submenu__trigger {
+  background: var(--ui-color-hover);
+  color: var(--ui-menu-hover-color, var(--ui-color-text));
+}
+:host > .ui-submenu__trigger:focus-visible { outline: 2px solid var(--ui-color-focus-ring); outline-offset: -2px; }
+:host > .ui-submenu__trigger:disabled { color: var(--ui-color-text-disabled); background: transparent; cursor: not-allowed; }
+
+/* Contient la page courante (replié ou flottant) : graisse + barre, pas seulement la couleur. */
+:host(.ui-submenu--current) > .ui-submenu__trigger {
+  color: var(--ui-menu-active-color, var(--ui-color-primary-text));
+  font-weight: var(--ui-font-weight-bold);
+}
+:host(.ui-submenu--current) > .ui-submenu__trigger::before {
+  content: '';
+  position: absolute;
+  inset-block: 0.5rem;
+  left: 0;
+  width: 3px;
+  border-radius: 3px;
+  background: var(--ui-menu-indicator, var(--ui-color-primary));
+}
+:host(.ui-submenu--top.ui-submenu--current) > .ui-submenu__trigger::before { inset: auto var(--ui-space-2) 0; width: auto; height: 3px; }
+
+:host > .ui-submenu__trigger > .ui-submenu__icon { flex: none; font-size: 1.15rem; }
+:host > .ui-submenu__trigger > .ui-submenu__initial {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-neutral-subtle);
+  font-size: var(--ui-font-size-xs);
+  font-weight: var(--ui-font-weight-bold);
+}
+:host > .ui-submenu__trigger > .ui-submenu__label { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+:host > .ui-submenu__trigger > .ui-submenu__badge:empty { display: none; }
+:host > .ui-submenu__trigger > .ui-submenu__chevron {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  transition: transform var(--ui-duration-fast) var(--ui-easing);
+}
+:host > .ui-submenu__trigger:dir(rtl) > .ui-submenu__chevron { transform: scaleX(-1); }
+/* Sur place : › devient ⌄ une fois ouvert. Sous le bouton : ⌄ puis ⌃. */
+:host(.ui-submenu--inline.ui-submenu--open) > .ui-submenu__trigger > .ui-submenu__chevron { transform: rotate(90deg); }
+:host(.ui-submenu--below) > .ui-submenu__trigger > .ui-submenu__chevron { transform: rotate(90deg); }
+:host(.ui-submenu--below.ui-submenu--open) > .ui-submenu__trigger > .ui-submenu__chevron { transform: rotate(-90deg); }
+
+/* Premier niveau d'une barre horizontale : largeur au contenu, hauteur de la barre. */
+:host(.ui-submenu--top) { justify-content: stretch; }
+:host(.ui-submenu--top) > .ui-submenu__trigger { width: auto; flex: 1; gap: var(--ui-space-2); }
+:host(.ui-submenu--top) > .ui-submenu__trigger > .ui-submenu__label { flex: none; }
+
+/* Bouton de menu autonome (barre d'outils, actions) : bouton compact au lieu d'une ligne de menu. */
+:host(.ui-submenu--standalone) > .ui-submenu__trigger { width: auto; min-height: 2.25rem; gap: var(--ui-space-2); color: var(--ui-color-text); }
+:host(.ui-submenu--standalone) > .ui-submenu__trigger > .ui-submenu__label { flex: none; }
+
+/* Rail : icône seule ; libellé lu par les lecteurs d'écran et affiché en infobulle. */
+:host(.ui-submenu--rail) > .ui-submenu__trigger { justify-content: center; padding: 0; }
+:host(.ui-submenu--rail) > .ui-submenu__trigger > .ui-submenu__label,
+:host(.ui-submenu--rail) > .ui-submenu__trigger > .ui-submenu__badge {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+:host(.ui-submenu--rail) > .ui-submenu__trigger > .ui-submenu__chevron {
+  position: absolute;
+  inset-inline-end: 2px;
+  width: 0.75rem;
+  height: 0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :host > .ui-submenu__trigger > .ui-submenu__chevron { transition: none; }
+}
+
+/* ---------- Panneau ---------- */
+:host > .ui-submenu__panel { display: flex; flex-direction: column; gap: 2px; }
+:host > .ui-submenu__panel[hidden] { display: none; }
+
+/* Sur place : retrait et filet qui matérialise le niveau. */
+:host(.ui-submenu--inline) > .ui-submenu__panel {
+  margin-block: 2px;
+  margin-inline-start: calc(var(--ui-space-3) + 0.5rem);
+  padding-inline-start: var(--ui-space-2);
+  border-inline-start: 1px solid var(--ui-color-border);
+}
+
+/* Flottant (popover natif, couche supérieure : jamais rogné par la barre ou la colonne). */
+:host > .ui-submenu__panel--flyout {
+  /* Les couleurs « sur fond coloré » d'une barre ne s'appliquent pas au panneau. */
+  --ui-menu-color: var(--ui-color-text-muted);
+  --ui-menu-hover-color: var(--ui-color-text);
+  --ui-menu-active-bg: var(--ui-color-primary-subtle);
+  --ui-menu-active-color: var(--ui-color-primary-text);
+  --ui-menu-indicator: var(--ui-color-primary);
+  box-sizing: border-box;
+  min-width: 12rem;
+  max-width: min(20rem, calc(100vw - 1rem));
+  max-height: min(70vh, 32rem);
+  overflow: auto;
+  padding: var(--ui-space-1);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface-raised);
+  color: var(--ui-color-text);
+  box-shadow: var(--ui-shadow-lg);
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size-sm);
+  text-align: start;
+}
+/* Le display:flex ci-dessus l'emporterait sur le masquage natif d'un popover fermé. */
+:host > .ui-submenu__panel--flyout:not(:popover-open) { display: none; }
+
+/* Ancrage au bouton là où c'est géré ; ailleurs, position calculée en JS à l'ouverture. */
+@supports (position-area: block-end) {
+  :host > .ui-submenu__panel--flyout { inset: auto; margin: 0; }
+  :host(.ui-submenu--below) > .ui-submenu__panel--flyout {
+    margin-block-start: 4px;
+    position-area: block-end span-inline-end;
+    position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
+  }
+  :host(.ui-submenu--side) > .ui-submenu__panel--flyout {
+    margin-inline-start: 2px;
+    position-area: inline-end span-block-end;
+    position-try-fallbacks: flip-inline, flip-block, flip-block flip-inline;
+  }
+}

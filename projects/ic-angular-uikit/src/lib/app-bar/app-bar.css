@@ -1,0 +1,121 @@
+/* Encapsulation désactivée : toutes les règles sont préfixées par .ui-app-bar. */
+.ui-app-bar {
+  /* Couleurs d'origine, mémorisées avant que la variante primary ne les remplace dans la barre. */
+  --_ab-text: var(--ui-color-text);
+  --_ab-muted: var(--ui-color-text-muted);
+  --_ab-subtle: var(--ui-color-text-subtle);
+  --_ab-hover: var(--ui-color-hover);
+  --_ab-active: var(--ui-color-active);
+  --_ab-focus: var(--ui-color-focus-ring);
+  --_ab-border: var(--ui-color-border);
+  --_ab-border-strong: var(--ui-color-border-strong);
+  --_ab-border-control: var(--ui-color-border-control);
+  --_ab-primary-text: var(--ui-color-primary-text);
+  position: relative;
+  z-index: var(--ui-app-bar-z, 3);
+  display: block;
+  border-bottom: 1px solid var(--ui-color-border);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family);
+}
+.ui-app-bar--sticky { position: sticky; top: 0; }
+.ui-app-bar--elevated { border-bottom-color: transparent; box-shadow: var(--ui-shadow-md); }
+
+.ui-app-bar__bar {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+  min-height: var(--ui-app-bar-height, 3.5rem);
+  padding-inline: var(--ui-app-bar-padding, var(--ui-space-4));
+}
+.ui-app-bar__start,
+.ui-app-bar__end { display: flex; flex: none; align-items: center; gap: var(--ui-space-2); min-width: 0; }
+.ui-app-bar__end { margin-inline-start: auto; gap: var(--ui-space-1); }
+.ui-app-bar__start:empty,
+.ui-app-bar__end:empty { display: none; }
+.ui-app-bar__slot-start,
+.ui-app-bar__slot-end { display: flex; align-items: center; gap: inherit; min-width: 0; }
+a.ui-app-bar__slot-start { color: inherit; font-weight: var(--ui-font-weight-bold); text-decoration: none; }
+
+/* Navigation pleine largeur : les éléments du menu prennent la hauteur de la barre. */
+.ui-app-bar__nav { display: flex; flex: 1; align-items: center; align-self: stretch; min-width: 0; }
+.ui-app-bar__nav:empty { display: none; }
+.ui-app-bar__nav:not(.ui-app-bar__nav--panel) > .ui-menu--horizontal { align-self: stretch; padding-block: var(--ui-space-2); }
+
+/* ---------- Bouton ☰ ---------- */
+.ui-app-bar__toggle {
+  display: grid;
+  flex: none;
+  place-items: center;
+  order: 2;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-radius-md);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.ui-app-bar__toggle svg { width: 1.5rem; height: 1.5rem; }
+.ui-app-bar__toggle:hover,
+.ui-app-bar__toggle[aria-expanded='true'] { background: var(--ui-color-hover); }
+.ui-app-bar__toggle:focus-visible { outline: 2px solid var(--ui-color-focus-ring); outline-offset: 2px; }
+
+/* ---------- Mode replié : la navigation devient un panneau sous la barre ---------- */
+.ui-app-bar--compact .ui-app-bar__end { order: 1; }
+.ui-app-bar__nav--panel {
+  position: absolute;
+  top: 100%;
+  inset-inline: 0;
+  flex-direction: column;
+  align-items: stretch;
+  max-height: calc(100dvh - var(--ui-app-bar-height, 3.5rem));
+  overflow: auto;
+  padding: var(--ui-space-2) var(--ui-app-bar-padding, var(--ui-space-4)) var(--ui-space-3);
+  border-bottom: 1px solid var(--ui-color-border);
+  background: var(--ui-color-surface-raised);
+  box-shadow: var(--ui-shadow-lg);
+  overscroll-behavior: contain;
+}
+.ui-app-bar__nav--panel[hidden] { display: none; }
+
+/* ---------- Couleur primary ---------- */
+.ui-app-bar--primary { border-bottom-color: transparent; background: var(--ui-color-primary); }
+.ui-app-bar--primary > .ui-app-bar__bar {
+  --ui-color-text: var(--ui-color-on-primary);
+  --ui-color-text-muted: var(--ui-color-on-primary);
+  --ui-color-text-subtle: var(--ui-color-on-primary);
+  --ui-color-primary-text: var(--ui-color-on-primary);
+  --ui-color-hover: var(--ui-color-primary-hover);
+  --ui-color-active: var(--ui-color-primary-hover);
+  --ui-color-focus-ring: var(--ui-color-on-primary);
+  --ui-color-border: color-mix(in srgb, var(--ui-color-on-primary) 35%, transparent);
+  --ui-color-border-strong: var(--ui-color-on-primary);
+  --ui-color-border-control: var(--ui-color-on-primary);
+  --ui-menu-active-bg: var(--ui-color-primary-hover);
+  --ui-menu-active-color: var(--ui-color-on-primary);
+  --ui-menu-indicator: var(--ui-color-on-primary);
+  color: var(--ui-color-on-primary);
+}
+/* Îlots sur fond clair (panneau replié, sous-menus flottants, popovers, champs) : couleurs d'origine. */
+.ui-app-bar--primary .ui-app-bar__nav--panel,
+.ui-app-bar--primary [popover],
+.ui-app-bar--primary dialog,
+.ui-app-bar--primary .ui-field__control {
+  --ui-color-text: var(--_ab-text);
+  --ui-color-text-muted: var(--_ab-muted);
+  --ui-color-text-subtle: var(--_ab-subtle);
+  --ui-color-primary-text: var(--_ab-primary-text);
+  --ui-color-hover: var(--_ab-hover);
+  --ui-color-active: var(--_ab-active);
+  --ui-color-focus-ring: var(--_ab-focus);
+  --ui-color-border: var(--_ab-border);
+  --ui-color-border-strong: var(--_ab-border-strong);
+  --ui-color-border-control: var(--_ab-border-control);
+  --ui-menu-active-bg: var(--ui-color-primary-subtle);
+  --ui-menu-active-color: var(--_ab-primary-text);
+  --ui-menu-indicator: var(--ui-color-primary);
+  color: var(--_ab-text);
+}

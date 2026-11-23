@@ -1,0 +1,64 @@
+/*
+ * Thème « light » — thème par défaut (appliqué à :root sans attribut).
+ * Un thème = un jeu de valeurs pour les jetons sémantiques --ui-color-* et --ui-shadow-*.
+ * Contrastes vérifiés : texte ≥ 4,5:1 sur tous les fonds, contours de contrôles et focus ≥ 3:1.
+ */
+:root,
+[data-ui-theme='light'],
+[data-ui-theme='season-light'] {
+  color-scheme: light;
+
+  --ui-color-bg: #f8fafc;
+  --ui-color-surface: #ffffff;
+  --ui-color-surface-raised: #ffffff;
+  --ui-color-surface-sunken: #f1f5f9;
+  --ui-color-overlay: rgb(15 23 42 / 0.5);
+
+  --ui-color-text: #0f172a;
+  --ui-color-text-muted: #475569;
+  --ui-color-text-subtle: #5f6f84;
+  --ui-color-text-disabled: #94a3b8;
+
+  --ui-color-border: #e2e8f0;
+  --ui-color-border-strong: #cbd5e1;
+  /* Contour des contrôles de formulaire : ≥ 3:1 avec tous les fonds (WCAG 1.4.11). */
+  --ui-color-border-control: #7c8799;
+  --ui-color-focus-ring: #2563eb;
+
+  --ui-color-primary: #2563eb;
+  --ui-color-primary-hover: #1d4ed8;
+  --ui-color-primary-subtle: #dbeafe;
+  --ui-color-primary-text: #1e40af;
+  --ui-color-on-primary: #ffffff;
+
+  --ui-color-neutral: #475569;
+  --ui-color-neutral-hover: #334155;
+  --ui-color-neutral-subtle: #e2e8f0;
+  --ui-color-neutral-text: #1e293b;
+  --ui-color-on-neutral: #ffffff;
+
+  --ui-color-success: #15803d;
+  --ui-color-success-hover: #166534;
+  --ui-color-success-subtle: #dcfce7;
+  --ui-color-success-text: #14532d;
+  --ui-color-on-success: #ffffff;
+
+  --ui-color-warning: #b45309;
+  --ui-color-warning-hover: #92400e;
+  --ui-color-warning-subtle: #fef3c7;
+  --ui-color-warning-text: #78350f;
+  --ui-color-on-warning: #ffffff;
+
+  --ui-color-danger: #dc2626;
+  --ui-color-danger-hover: #b91c1c;
+  --ui-color-danger-subtle: #fee2e2;
+  --ui-color-danger-text: #991b1b;
+  --ui-color-on-danger: #ffffff;
+
+  --ui-color-hover: rgb(15 23 42 / 0.05);
+  --ui-color-active: rgb(15 23 42 / 0.09);
+
+  --ui-shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06);
+  --ui-shadow-md: 0 4px 12px rgb(15 23 42 / 0.08), 0 1px 3px rgb(15 23 42 / 0.06);
+  --ui-shadow-lg: 0 20px 40px rgb(15 23 42 / 0.16), 0 4px 12px rgb(15 23 42 / 0.08);
+}

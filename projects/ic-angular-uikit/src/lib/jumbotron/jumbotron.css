@@ -1,0 +1,149 @@
+/* Encapsulation désactivée : toutes les règles sont préfixées par .ui-jumbotron. */
+.ui-jumbotron {
+  /* Couleurs d'origine, rétablies dans les champs et popovers quand le fond est coloré. */
+  --_jb-text: var(--ui-color-text);
+  --_jb-muted: var(--ui-color-text-muted);
+  --_jb-primary-text: var(--ui-color-primary-text);
+  --_jb-hover: var(--ui-color-hover);
+  --_jb-focus: var(--ui-color-focus-ring);
+  --_jb-border-strong: var(--ui-color-border-strong);
+  --_jb-border-control: var(--ui-color-border-control);
+  --_jb-neutral-subtle: var(--ui-color-neutral-subtle);
+  --_jb-neutral-text: var(--ui-color-neutral-text);
+  --_jb-active: var(--ui-color-active);
+  --_pad: clamp(var(--ui-space-8), 6cqi, 4.5rem);
+  container: ui-jumbotron / inline-size;
+  position: relative;
+  isolation: isolate;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--ui-jumbotron-radius, 0);
+  background: var(--ui-jumbotron-bg, var(--_bg));
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family);
+}
+.ui-jumbotron--surface { --_bg: var(--ui-color-surface); }
+.ui-jumbotron--sunken { --_bg: var(--ui-color-surface-sunken); }
+.ui-jumbotron--primary { --_bg: var(--ui-color-primary); }
+.ui-jumbotron--gradient { --_bg: linear-gradient(135deg, var(--ui-color-primary), var(--ui-color-primary-hover)); }
+.ui-jumbotron--sm { --_pad: clamp(var(--ui-space-6), 4cqi, var(--ui-space-8)); }
+.ui-jumbotron--lg { --_pad: clamp(3rem, 9cqi, 7rem); }
+.ui-jumbotron--screen { --_pad: clamp(3rem, 8cqi, 6rem); }
+
+/* ---------- Fond coloré ou image : texte clair, jetons de texte réaffectés ---------- */
+/* Réaffectations sur le contenu (pas sur l'hôte, où les couleurs d'origine sont mémorisées). */
+.ui-jumbotron--primary,
+.ui-jumbotron--gradient { --_on: var(--ui-color-on-primary); --_on-hover: var(--ui-color-primary-hover); }
+.ui-jumbotron--image { --_on: #fff; --_on-hover: rgb(255 255 255 / 0.16); --_bg: #1e293b; }
+.ui-jumbotron--on-color { color: var(--_on); }
+.ui-jumbotron--on-color > .ui-jumbotron__inner {
+  --ui-color-hover: var(--_on-hover);
+  --ui-color-text: var(--_on);
+  --ui-color-text-muted: var(--_on);
+  --ui-color-primary-text: var(--_on);
+  --ui-color-focus-ring: var(--_on);
+  --ui-color-border-strong: var(--_on);
+  --ui-color-border-control: var(--_on);
+  /* Boutons secondary : fond opaque (le fond neutre translucide du thème sombre laisserait passer la couleur). */
+  --ui-color-neutral-subtle: var(--ui-color-surface);
+  --ui-color-neutral-text: var(--_jb-text);
+  --ui-color-active: var(--ui-color-surface-sunken);
+  color: var(--_on);
+}
+/* Îlots sur fond clair (champs, popovers) : couleurs d'origine. */
+.ui-jumbotron--on-color .ui-field__control,
+.ui-jumbotron--on-color [popover],
+.ui-jumbotron--on-color dialog {
+  --ui-color-text: var(--_jb-text);
+  --ui-color-text-muted: var(--_jb-muted);
+  --ui-color-primary-text: var(--_jb-primary-text);
+  --ui-color-hover: var(--_jb-hover);
+  --ui-color-focus-ring: var(--_jb-focus);
+  --ui-color-border-strong: var(--_jb-border-strong);
+  --ui-color-border-control: var(--_jb-border-control);
+  --ui-color-neutral-subtle: var(--_jb-neutral-subtle);
+  --ui-color-neutral-text: var(--_jb-neutral-text);
+  --ui-color-active: var(--_jb-active);
+  color: var(--_jb-text);
+}
+
+.ui-jumbotron__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ui-jumbotron__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: rgb(0 0 0 / var(--_overlay, 0.55));
+}
+
+/* ---------- Mise en page ---------- */
+.ui-jumbotron__inner {
+  box-sizing: border-box;
+  display: grid;
+  align-items: center;
+  gap: var(--ui-space-8);
+  max-width: var(--ui-jumbotron-max, 72rem);
+  margin-inline: auto;
+  padding: var(--_pad) var(--ui-jumbotron-gutter, var(--ui-space-6));
+}
+.ui-jumbotron--screen > .ui-jumbotron__inner { min-height: 100vh; min-height: 100svh; }
+.ui-jumbotron__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ui-space-4);
+  min-width: 0;
+  max-width: 46rem;
+}
+.ui-jumbotron--center .ui-jumbotron__content { align-items: center; margin-inline: auto; text-align: center; }
+
+.ui-jumbotron__eyebrow {
+  margin: 0;
+  color: var(--ui-color-primary-text);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-bold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ui-jumbotron__title {
+  margin: 0;
+  color: inherit;
+  font-size: clamp(2rem, 1.25rem + 3.2cqi, 3.75rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.ui-jumbotron__lead {
+  margin: 0;
+  max-width: 40rem;
+  color: var(--ui-color-text-muted);
+  font-size: clamp(1.05rem, 0.95rem + 0.7cqi, 1.375rem);
+  line-height: 1.55;
+  text-wrap: pretty;
+}
+.ui-jumbotron__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-3);
+  margin-top: var(--ui-space-2);
+}
+.ui-jumbotron--center .ui-jumbotron__actions { justify-content: center; }
+
+.ui-jumbotron__media { display: block; min-width: 0; max-width: 100%; justify-self: center; }
+img.ui-jumbotron__media,
+video.ui-jumbotron__media,
+.ui-jumbotron__media img { width: 100%; height: auto; border-radius: var(--ui-radius-lg); }
+
+/* Illustration à côté du texte quand le composant est assez large (pas l'écran). */
+@container ui-jumbotron (min-width: 48rem) {
+  .ui-jumbotron--split > .ui-jumbotron__inner { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: clamp(var(--ui-space-8), 5cqi, 4rem); }
+  .ui-jumbotron--split.ui-jumbotron--media-start .ui-jumbotron__media { order: -1; }
+  .ui-jumbotron--split.ui-jumbotron--center .ui-jumbotron__content { margin-inline: 0; }
+}

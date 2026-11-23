@@ -1,59 +1,74 @@
-# UiKit
+# IC Angular UiKit
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.2.2.
+[![npm](https://img.shields.io/npm/v/ic-angular-uikit)](https://www.npmjs.com/package/ic-angular-uikit)
+[![licence MIT](https://img.shields.io/badge/licence-MIT-blue)](LICENSE)
 
-## Development server
+Bibliothèque de composants **Angular 22** accessibles et thémables (standalone, signaux, `OnPush`), publiée sur npm
+sous le nom [`ic-angular-uikit`](https://www.npmjs.com/package/ic-angular-uikit), et son site de documentation généré à
+partir du code.
 
-To start a local development server, run:
-
-```bash
-ng serve
+```sh
+npm install ic-angular-uikit
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+**Installation, configuration et utilisation : voir le [README du paquet](projects/ic-angular-uikit/README.md)**
+(c'est aussi la page npm). Ce fichier-ci décrit le dépôt et le développement de la librairie.
 
-## Code scaffolding
+## Structure
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+| Chemin | Contenu |
+| --- | --- |
+| `projects/ic-angular-uikit/src/lib/<composant>/` | Un dossier par composant (+ ses directives et sa logique pure), avec ses tests `*.spec.ts` |
+| `projects/ic-angular-uikit/src/styles/` | `tokens.css` (jetons communs), `themes/*.css`, `seasons.css`, point d'entrée `ic-angular-uikit.css` |
+| `projects/docs/` | Site de documentation (Angular) |
+| `projects/docs/src/app/examples/<composant>/*.example.ts` | Exemples affichés sur le site (découverts automatiquement) |
+| `projects/docs/src/backend-examples/<composant>/` | Onglet « Côté serveur » (Angular, Symfony, Node.js, PHP…) |
+| `tools/generate-docs.mjs` | Extrait l'API (inputs, outputs, models, méthodes, slots, variables CSS, types) avec le compilateur TypeScript |
+| `deploy/nginx.conf` | Configuration du site statique (CSP stricte + Trusted Types) |
 
-```bash
-ng generate component component-name
+## Commandes
+
+```sh
+npm install          # dépendances (Node.js 22 ou plus)
+npm start            # site de doc sur http://localhost:4220 (régénère l'API à chaque modification)
+npm test             # tests unitaires de la librairie (Vitest)
+npm run lint         # ESLint (règles de sécurité incluses)
+npm run build        # dist/ic-angular-uikit (paquet npm) + dist/docs (site statique)
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+`npm run start:proxy` sert le site derrière un proxy sous `/proxy/4220/` (build en continu + serveur statique avec la
+CSP de production).
 
-```bash
-ng generate --help
-```
+## Documenter un composant
 
-## Building
+La documentation est tirée du code — il n'y a rien à maintenir à la main :
 
-To build the project run:
+- **Description** : JSDoc de la classe (Markdown simple : paragraphes, listes `- `, `code`, **gras**, blocs de code).
+  **Propriétés / événements / méthodes** : JSDoc des `input()`, `model()`, `output()` et méthodes publiques ; types et
+  valeurs par défaut sont lus par le compilateur.
+- **Slots** : `@slot [uiCardHeader] - Description` ; **variables CSS** : `@cssprop --ui-x - Description` (sur la classe).
+- **Catégorie du menu** : `@category Formulaires` sur la classe du composant principal (ordre des catégories dans
+  `projects/docs/src/app/shared/nav.ts`).
+- **Masquer** un membre : `@internal`.
+- **Exemple** : `projects/docs/src/app/examples/<dossier>/<nom>.example.ts` ; la 1re ligne de la JSDoc est le titre,
+  la suite la description, `@order N` fixe l'ordre. La classe affichée est celle dont le nom finit par `Example`.
 
-```bash
-ng build
-```
+Ajouter un composant = créer `projects/ic-angular-uikit/src/lib/<nom>/<nom>.ts`, l'exporter dans `public-api.ts` : la
+page `/components/<nom>` apparaît.
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+Règles du projet : composants standalone `OnPush` à base de signaux, préfixe `ui`, aucun `innerHTML` ni
+`bypassSecurityTrust*`, WCAG 2.1 AA (contrastes vérifiés dans tous les thèmes, clavier, axe-core sans violation),
+styles qui ne fuient pas dans les instances imbriquées du même composant (combinateurs enfants).
 
-## Running unit tests
+## Publier une version
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+1. Mettre à jour `version` dans `projects/ic-angular-uikit/package.json` et `CHANGELOG.md`.
+2. Vérifier : `npm run lint && npm test && npm run build`.
+3. Contrôler le contenu du paquet : `cd dist/ic-angular-uikit && npm pack --dry-run`.
+4. Publier depuis `dist/ic-angular-uikit` : `npm publish` (compte npm avec 2FA), puis créer le tag `vX.Y.Z`.
 
-```bash
-ng test
-```
+`npm run build:lib` recopie `LICENSE` et `CHANGELOG.md` dans le paquet.
 
-## Running end-to-end tests
+## Licence
 
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+[MIT](LICENSE) © Imperium Clan Software

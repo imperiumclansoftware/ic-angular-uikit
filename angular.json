@@ -6,5 +6,132 @@
   },
   "newProjectRoot": "projects",
   "projects": {
+    "ic-angular-uikit": {
+      "projectType": "library",
+      "root": "projects/ic-angular-uikit",
+      "sourceRoot": "projects/ic-angular-uikit/src",
+      "prefix": "ui",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:ng-packagr",
+          "configurations": {
+            "production": {
+              "tsConfig": "projects/ic-angular-uikit/tsconfig.lib.prod.json"
+            },
+            "development": {
+              "tsConfig": "projects/ic-angular-uikit/tsconfig.lib.json"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "test": {
+          "builder": "@angular/build:unit-test",
+          "options": {
+            "tsConfig": "projects/ic-angular-uikit/tsconfig.spec.json"
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/ic-angular-uikit/**/*.ts",
+              "projects/ic-angular-uikit/**/*.html"
+            ]
+          }
+        }
+      }
+    },
+    "docs": {
+      "projectType": "application",
+      "schematics": {},
+      "root": "projects/docs",
+      "sourceRoot": "projects/docs/src",
+      "prefix": "doc",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "projects/docs/src/main.ts",
+            "tsConfig": "projects/docs/tsconfig.app.json",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "projects/docs/public"
+              }
+            ],
+            "styles": [
+              "projects/ic-angular-uikit/src/styles/ic-angular-uikit.css",
+              "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
+              "node_modules/material-symbols/outlined.css",
+              "node_modules/bootstrap-icons/font/bootstrap-icons.min.css",
+              "projects/docs/src/styles.css"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "750kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "10kB",
+                  "maximumError": "14kB"
+                }
+              ],
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            },
+            "code-server": {
+              "baseHref": "/absproxy/4220/"
+            },
+            "proxy": {
+              "baseHref": "/proxy/4220/",
+              "outputPath": "dist/docs-proxy"
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "docs:build:production"
+            },
+            "development": {
+              "buildTarget": "docs:build:development"
+            },
+            "code-server": {
+              "buildTarget": "docs:build:development,code-server",
+              "servePath": "/absproxy/4220/"
+            }
+          },
+          "defaultConfiguration": "development",
+          "options": {
+            "port": 4220,
+            "host": "0.0.0.0",
+            "allowedHosts": true
+          }
+        },
+        "test": {
+          "builder": "@angular/build:unit-test"
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "projects/docs/**/*.ts",
+              "projects/docs/**/*.html"
+            ]
+          }
+        }
+      }
+    }
   }
 }

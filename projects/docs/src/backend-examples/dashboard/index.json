@@ -1,0 +1,70 @@
+{
+  "intro": "`ui-dashboard` émet à chaque modification de l'utilisateur une `UiDashboardLayout` : `{ version: 1, columns, items }`, où chaque élément vaut `{ id, type, x, y, w, h, title?, config? }`. Les exemples ci-dessous enregistrent **une disposition par utilisateur et par tableau de bord** avec le même contrat : `GET /api/dashboards/{clé}` (`200` disposition + `updatedAt`, ou `404` s'il n'y en a pas encore), `PUT /api/dashboards/{clé}` (`200 { updatedAt }`), `DELETE /api/dashboards/{clé}` (`204`, retour à la disposition par défaut).\n\nLa disposition vient du navigateur : **le serveur la valide entièrement** avant de l'enregistrer, et le client la revalide avec `sanitizeDashboardLayout()` quand il la relit. Règles appliquées par chaque exemple : authentification obligatoire ; CSRF « double submit » (cookie `XSRF-TOKEN` = en-tête `X-XSRF-TOKEN`, géré par Angular) ; propriétaire = utilisateur de la session, **jamais une valeur du corps**, et filtre propriétaire dans chaque requête SQL (une disposition d'un autre utilisateur est introuvable) ; clé limitée à `[a-z0-9-]` ; corps JSON de 64 Ko au plus ; 50 widgets au plus ; types de widgets en liste blanche ; positions et tailles entières dans la grille ; identifiants uniques ; titre de 120 caractères sans caractère de contrôle ; réglages = objet JSON de 8 Ko et 5 niveaux au plus ; champs inconnus refusés (Symfony ignore ceux de la racine, jamais enregistrés) ; `Cache-Control: no-store`.\n\nCodes d'erreur : `400` (JSON mal formé), `401` (non connecté), `403` (jeton CSRF), `404` (aucune disposition ou clé invalide), `413` (trop volumineux), `415` (pas du JSON), `422` (disposition invalide, avec le détail).",
+  "backends": [
+    {
+      "id": "angular",
+      "title": "Angular (client)",
+      "notes": "`DashboardStore` charge et valide la disposition, regroupe les modifications (un `PUT` 800 ms après la dernière, `switchMap` annule une requête obsolète), garde la dernière disposition en cas d'échec et l'envoie en quittant la page. Le jeton CSRF est ajouté par `HttpClient`.",
+      "files": [
+        {
+          "file": "angular.ts",
+          "name": "app.config.ts + dashboard-store.ts + home-dashboard.ts",
+          "language": "ts"
+        }
+      ]
+    },
+    {
+      "id": "symfony",
+      "title": "Symfony",
+      "install": "composer require symfony/orm-pack symfony/validator symfony/serializer symfony/uid symfony/security-bundle",
+      "notes": "Conforme aux guidelines de l'équipe : DTO validé par `#[MapRequestPayload]` (`Assert\\Collection` sans champ supplémentaire, `Assert\\Callback` pour les règles croisées ; seuls `version`, `columns` et `items` sont enregistrés), `Uuid::v7()`, `#[IsGranted]`, filtre propriétaire dans la requête, contrainte d'unicité (propriétaire, clé). Le CSRF est assuré par le `CsrfDoubleSubmitSubscriber` du secure-skeleton. La taille du corps est contrôlée avant la lecture du JSON (`JsonBodyLimitSubscriber`). Générez la migration avec `bin/console make:migration`.",
+      "files": [
+        {
+          "file": "symfony-DashboardLayout.php",
+          "name": "src/Entity/DashboardLayout.php",
+          "language": "php"
+        },
+        {
+          "file": "symfony-DashboardLayoutInput.php",
+          "name": "src/Dto/DashboardLayoutInput.php",
+          "language": "php"
+        },
+        {
+          "file": "symfony-DashboardController.php",
+          "name": "src/Controller/DashboardController.php",
+          "language": "php"
+        },
+        {
+          "file": "symfony-JsonBodyLimitSubscriber.php",
+          "name": "src/EventSubscriber/JsonBodyLimitSubscriber.php",
+          "language": "php"
+        }
+      ]
+    },
+    {
+      "id": "node",
+      "title": "Node.js",
+      "install": "npm install express@5",
+      "notes": "Express 5 et SQLite intégré à Node (`node:sqlite`, requêtes préparées, `INSERT … ON CONFLICT` pour créer ou remplacer). Le corps est limité à 64 Ko pendant la lecture ; la validation ne garde que les champs connus.",
+      "files": [
+        {
+          "file": "node-express.mjs",
+          "name": "server.mjs",
+          "language": "ts"
+        }
+      ]
+    },
+    {
+      "id": "php",
+      "title": "PHP natif",
+      "notes": "Sans framework : PDO (SQLite ici, même code avec MySQL ou PostgreSQL), requêtes préparées, lecture du corps bornée à 64 Ko, `json_decode` avec profondeur limitée. Routez `/api/dashboards/*` vers ce script (Nginx `try_files` ou `.htaccess`).",
+      "files": [
+        {
+          "file": "php-native.php",
+          "name": "public/api/dashboards.php",
+          "language": "php"
+        }
+      ]
+    }
+  ]
+}

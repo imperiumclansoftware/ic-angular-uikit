@@ -1,0 +1,80 @@
+/*
+ * L'hôte est un espaceur dans le flux (largeur réservée : --_occupied). Le panneau visible est positionné
+ * sur .ui-layout__body : en mode « over » ou sur mobile, il passe au-dessus du contenu sans le pousser.
+ */
+:host {
+  flex: none;
+  width: var(--_occupied);
+  transition: width var(--ui-duration-normal) var(--ui-easing);
+}
+:host(.ui-sidebar--right) { order: 2; }
+:host(.ui-sidebar--resizing) { transition: none; }
+
+.ui-sidebar__panel {
+  position: absolute;
+  inset-block: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: min(var(--_panel), 88%);
+  background: var(--ui-sidebar-bg, var(--ui-color-surface));
+  color: var(--ui-color-text);
+  outline: none;
+  transition:
+    width var(--ui-duration-normal) var(--ui-easing),
+    transform var(--ui-duration-normal) var(--ui-easing),
+    box-shadow var(--ui-duration-normal) var(--ui-easing),
+    visibility 0s;
+}
+:host(.ui-sidebar--left) .ui-sidebar__panel { left: 0; border-right: 1px solid var(--ui-color-border); }
+:host(.ui-sidebar--right) .ui-sidebar__panel { right: 0; border-left: 1px solid var(--ui-color-border); }
+:host(.ui-sidebar--resizing) .ui-sidebar__panel { transition: none; }
+
+/* Masquée : glisse hors champ puis sort de l'ordre de tabulation et de l'arbre d'accessibilité. */
+:host(.ui-sidebar--closed) .ui-sidebar__panel {
+  visibility: hidden;
+  transition:
+    transform var(--ui-duration-normal) var(--ui-easing),
+    visibility 0s linear var(--ui-duration-normal);
+}
+:host(.ui-sidebar--left.ui-sidebar--closed) .ui-sidebar__panel { transform: translateX(-100%); }
+:host(.ui-sidebar--right.ui-sidebar--closed) .ui-sidebar__panel { transform: translateX(100%); }
+
+/* Au-dessus du contenu */
+:host(.ui-sidebar--overlay) .ui-sidebar__panel { z-index: 5; box-shadow: var(--ui-shadow-lg); }
+.ui-sidebar__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  background: var(--ui-color-overlay);
+  animation: ui-sidebar-fade var(--ui-duration-normal) var(--ui-easing);
+}
+
+.ui-sidebar__content { flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; padding: var(--ui-space-2); }
+
+/* Poignée de redimensionnement (bord intérieur) */
+.ui-sidebar__resizer {
+  position: absolute;
+  inset-block: 0;
+  width: 8px;
+  cursor: col-resize;
+  touch-action: none;
+}
+:host(.ui-sidebar--left) .ui-sidebar__resizer { right: -4px; }
+:host(.ui-sidebar--right) .ui-sidebar__resizer { left: -4px; }
+.ui-sidebar__resizer::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  left: 3px;
+  width: 2px;
+  background: transparent;
+  transition: background-color var(--ui-duration-fast) var(--ui-easing);
+}
+.ui-sidebar__resizer:hover::after,
+:host(.ui-sidebar--resizing) .ui-sidebar__resizer::after { background: var(--ui-color-primary); }
+.ui-sidebar__resizer:focus-visible { outline: none; }
+.ui-sidebar__resizer:focus-visible::after { background: var(--ui-color-focus-ring); width: 4px; left: 2px; }
+
+@keyframes ui-sidebar-fade { from { opacity: 0; } }

@@ -1,0 +1,53 @@
+:host { display: block; min-width: 0; }
+.doc-code {
+  position: relative;
+  border: 1px solid var(--doc-code-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--doc-code-bg);
+  color: var(--doc-code-text);
+  overflow: hidden;
+}
+.doc-code__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ui-space-1) var(--ui-space-2) var(--ui-space-1) var(--ui-space-4);
+  border-bottom: 1px solid var(--doc-code-border);
+  font-size: var(--ui-font-size-xs);
+  color: var(--doc-code-muted);
+}
+.doc-code__file { font-family: var(--ui-font-family-mono); }
+.doc-code__pre {
+  margin: 0;
+  padding: var(--ui-space-4);
+  overflow-x: auto;
+  font-family: var(--ui-font-family-mono);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  tab-size: 2;
+}
+.doc-code--inline-copy .doc-code__pre { padding-right: 5rem; }
+/* Focalisable pour défiler au clavier quand le code dépasse. */
+.doc-code__pre:focus-visible { outline: 2px solid var(--ui-color-focus-ring); outline-offset: -2px; }
+.doc-code__copy {
+  padding: 2px var(--ui-space-2);
+  border: 1px solid var(--doc-code-border);
+  border-radius: var(--ui-radius-sm);
+  background: transparent;
+  color: var(--doc-code-muted);
+  font: inherit;
+  font-size: var(--ui-font-size-xs);
+  cursor: pointer;
+}
+.doc-code--inline-copy .doc-code__copy { position: absolute; top: var(--ui-space-2); right: var(--ui-space-2); }
+.doc-code__copy:hover { color: var(--doc-code-text); }
+.doc-code__copy:focus-visible { outline: 2px solid var(--ui-color-focus-ring); }
+
+.tk-comment { color: var(--doc-tk-comment); font-style: italic; }
+.tk-string { color: var(--doc-tk-string); }
+.tk-keyword { color: var(--doc-tk-keyword); }
+.tk-number { color: var(--doc-tk-number); }
+.tk-tag { color: var(--doc-tk-tag); }
+.tk-attr, .tk-prop { color: var(--doc-tk-attr); }
+.tk-type, .tk-fn { color: var(--doc-tk-type); }
+.tk-punct { color: var(--doc-code-muted); }

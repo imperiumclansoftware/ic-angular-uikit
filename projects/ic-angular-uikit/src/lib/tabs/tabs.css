@@ -1,0 +1,112 @@
+/*
+ * Sélecteurs en enfants directs (host > layout > list > tab) : des ui-tabs imbriqués dans d'autres ui-tabs
+ * ne doivent pas hériter du style de leur parent (même composant, même attribut d'encapsulation).
+ */
+:host {
+  /* Le composant est son propre conteneur : la disposition verticale dépend de sa largeur, pas de l'écran. */
+  container: ui-tabs / inline-size;
+  display: block;
+  color: var(--ui-color-text);
+}
+
+:host > .ui-tabs__layout > .ui-tabs__list {
+  display: flex;
+  gap: var(--ui-space-1);
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+:host(.ui-tabs--line) > .ui-tabs__layout > .ui-tabs__list { border-bottom: 1px solid var(--ui-color-border); }
+:host(.ui-tabs--pills) > .ui-tabs__layout > .ui-tabs__list {
+  padding: var(--ui-space-1);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface-sunken);
+  width: fit-content;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+:host(.ui-tabs--stretch) > .ui-tabs__layout > .ui-tabs__list { width: auto; }
+:host(.ui-tabs--stretch) > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab { flex: 1; }
+
+:host > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-2) var(--ui-space-4);
+  border: 0;
+  background: transparent;
+  color: var(--ui-color-text-muted);
+  font: inherit;
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--ui-duration-fast) var(--ui-easing), background-color var(--ui-duration-fast) var(--ui-easing);
+}
+:host > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab:hover:not(:disabled) { color: var(--ui-color-text); }
+:host > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab:focus-visible {
+  outline: 2px solid var(--ui-color-focus-ring);
+  outline-offset: -2px;
+  border-radius: var(--ui-radius-sm);
+}
+:host > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab:disabled { color: var(--ui-color-text-disabled); cursor: not-allowed; }
+
+:host(.ui-tabs--line) > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab { margin-bottom: -1px; border-bottom: 2px solid transparent; }
+:host(.ui-tabs--line) > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab--active {
+  color: var(--ui-color-primary-text);
+  border-bottom-color: var(--ui-color-primary);
+}
+
+:host(.ui-tabs--pills) > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab {
+  border-radius: var(--ui-radius-sm);
+  padding: var(--ui-space-1) var(--ui-space-3);
+}
+:host(.ui-tabs--pills) > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab--active {
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+  box-shadow: var(--ui-shadow-sm);
+}
+
+:host > .ui-tabs__layout > .ui-tabs__panel { padding: var(--ui-space-4) 0; }
+:host > .ui-tabs__layout > .ui-tabs__panel:focus-visible {
+  outline: 2px solid var(--ui-color-focus-ring);
+  outline-offset: 2px;
+  border-radius: var(--ui-radius-sm);
+}
+
+/* Onglets verticaux : liste à gauche, panneau à droite, si le composant est assez large. */
+@container ui-tabs (width >= 30rem) {
+  :host(.ui-tabs--vertical) > .ui-tabs__layout {
+    display: grid;
+    grid-template-columns: var(--ui-tabs-list-width, minmax(10rem, max-content)) minmax(0, 1fr);
+    column-gap: var(--ui-space-6);
+    align-items: start;
+  }
+  :host(.ui-tabs--vertical) > .ui-tabs__layout > .ui-tabs__list { flex-direction: column; overflow: visible; }
+  :host(.ui-tabs--vertical) > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab {
+    justify-content: flex-start;
+    text-align: start;
+    white-space: normal;
+  }
+  :host(.ui-tabs--vertical) > .ui-tabs__layout > .ui-tabs__panel { padding-top: 0; }
+
+  :host(.ui-tabs--vertical.ui-tabs--line) > .ui-tabs__layout > .ui-tabs__list {
+    border-bottom: 0;
+    border-inline-end: 1px solid var(--ui-color-border);
+    align-self: stretch;
+  }
+  :host(.ui-tabs--vertical.ui-tabs--line) > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab {
+    margin: 0 -1px 0 0;
+    border-bottom: 0;
+    border-inline-end: 2px solid transparent;
+  }
+  :host(.ui-tabs--vertical.ui-tabs--line) > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab--active {
+    border-inline-end-color: var(--ui-color-primary);
+    background: var(--ui-color-primary-subtle);
+  }
+
+  :host(.ui-tabs--vertical.ui-tabs--pills) > .ui-tabs__layout > .ui-tabs__list { width: auto; }
+  :host(.ui-tabs--vertical.ui-tabs--pills) > .ui-tabs__layout > .ui-tabs__list > .ui-tabs__tab {
+    padding: var(--ui-space-2) var(--ui-space-3);
+  }
+}

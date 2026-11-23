@@ -1,0 +1,27 @@
+.ui-textarea__control { align-items: stretch; padding: 0; }
+
+.ui-textarea__input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border: 0;
+  outline: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--ui-color-text);
+  font: inherit;
+  line-height: var(--ui-line-height);
+}
+.ui-textarea__input::placeholder { color: var(--ui-color-text-subtle); opacity: 1; }
+.ui-textarea__input:disabled { cursor: not-allowed; }
+.ui-textarea__status { align-self: flex-start; margin: var(--ui-space-3) var(--ui-space-3) 0 0; }
+
+/* Auto-redimensionnement : amélioration progressive, hauteur fixe (rows) sinon. */
+:host(.ui-textarea--auto) .ui-textarea__input {
+  field-sizing: content;
+  height: auto;
+  min-block-size: calc(var(--_rows, 3) * 1lh + 2 * var(--ui-space-2));
+  max-block-size: calc(var(--_max-rows, 1000) * 1lh + 2 * var(--ui-space-2));
+}

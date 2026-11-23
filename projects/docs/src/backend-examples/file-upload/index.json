@@ -1,0 +1,53 @@
+{
+  "intro": "`ui-file-upload` envoie **un fichier par requête** en `multipart/form-data`, dans le champ `file`, via la fonction passée à `[upload]`. Les exemples ci-dessous implémentent le même contrat : `POST /api/uploads` renvoie `201 { id, name, size, type }`, puis `GET /api/uploads/{id}` permet au seul propriétaire de télécharger le fichier.\n\nLes contrôles du composant ne servent qu'au confort de l'utilisateur : **le serveur doit tout revérifier**. Chaque exemple applique les mêmes règles : authentification obligatoire ; CSRF « double submit » (cookie `XSRF-TOKEN` = en-tête `X-XSRF-TOKEN`, géré par Angular) ; taille maximale ; **type réel lu dans le contenu du fichier** et extension cohérente ; SVG et HTML refusés ; renommage avec un UUID ; stockage hors du dossier public ; téléchargement en pièce jointe avec `X-Content-Type-Options: nosniff` ; identifiant inconnu ou appartenant à un autre utilisateur → `404`.\n\nCodes d'erreur renvoyés : `400` (aucun fichier), `401` (non connecté), `403` (jeton CSRF), `413` (trop volumineux), `415` (type refusé).",
+  "backends": [
+    {
+      "id": "angular",
+      "title": "Angular (client)",
+      "notes": "Le jeton CSRF est renvoyé automatiquement par `HttpClient`. `reportProgress` et `observe: 'events'` alimentent la barre de progression.",
+      "files": [{ "file": "angular.ts", "name": "app.config.ts + documents.ts", "language": "ts" }]
+    },
+    {
+      "id": "node",
+      "title": "Node.js",
+      "install": "npm install express@5 multer@2 file-type@21",
+      "notes": "Express 5 + Multer (stockage en mémoire, limite de taille appliquée pendant la réception) ; le type réel est détecté par `file-type` à partir des premiers octets.",
+      "files": [{ "file": "node-express.mjs", "name": "server.mjs", "language": "ts" }]
+    },
+    {
+      "id": "php",
+      "title": "PHP natif",
+      "notes": "Sans framework : extension `fileinfo` pour le type réel, `move_uploaded_file()`, UUID v7 généré avec `random_bytes()`. Routez `/api/uploads*` vers ce script (Nginx `try_files` ou `.htaccess`).",
+      "files": [{ "file": "php-native.php", "name": "public/api/uploads.php", "language": "php" }]
+    },
+    {
+      "id": "symfony",
+      "title": "Symfony",
+      "install": "composer require symfony/orm-pack symfony/validator symfony/mime symfony/uid symfony/security-bundle",
+      "notes": "Conforme aux guidelines de l'équipe : `Uuid::v7()`, contrainte `Assert\\File` avec `extensions` (vérifie extension **et** type réel), `#[IsGranted]`, filtre propriétaire dans la requête. Le CSRF est assuré par le `CsrfDoubleSubmitSubscriber` du secure-skeleton.",
+      "files": [
+        { "file": "symfony-Document.php", "name": "src/Entity/Document.php", "language": "php" },
+        { "file": "symfony-UploadController.php", "name": "src/Controller/UploadController.php", "language": "php" }
+      ]
+    },
+    {
+      "id": "django",
+      "title": "Django",
+      "install": "pip install django filetype",
+      "notes": "Le CSRF natif de Django est réglé sur les noms attendus par Angular. Le type réel est détecté par `filetype` (pur Python, sans dépendance système).",
+      "files": [
+        { "file": "django-settings.py", "name": "settings.py (extrait)", "language": "py" },
+        { "file": "django-models.py", "name": "documents/models.py", "language": "py" },
+        { "file": "django-views.py", "name": "documents/views.py", "language": "py" },
+        { "file": "django-urls.py", "name": "documents/urls.py", "language": "py" }
+      ]
+    },
+    {
+      "id": "fastapi",
+      "title": "Python (FastAPI)",
+      "install": "pip install fastapi uvicorn python-multipart filetype",
+      "notes": "Lecture bornée du fichier (on ne se fie pas à la taille annoncée), middleware CSRF « double submit », métadonnées en JSON à côté du fichier (à remplacer par votre base de données).",
+      "files": [{ "file": "fastapi-main.py", "name": "main.py", "language": "py" }]
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+@if (label()) {
+  <label class="ui-field__label" [for]="inputId">
+    {{ label() }}
+    @if (isRequired()) {
+      <span class="ui-field__required" aria-hidden="true">*</span>
+    }
+  </label>
+}
+<div class="ui-field__control ui-select__control">
+  @if (icon(); as name) {
+    <ui-icon class="ui-select__icon" [name]="name" />
+  }
+  <select
+    #select
+    class="ui-select__native"
+    [id]="inputId"
+    [attr.name]="name() ?? null"
+    [disabled]="isDisabled()"
+    [required]="isRequired()"
+    [attr.aria-invalid]="validation.state().status === 'invalid'"
+    [attr.aria-describedby]="messageId"
+    [attr.aria-label]="label() ? null : (ariaLabel() ?? null)"
+    (change)="onSelect($event)"
+    (focus)="setFocused(true)"
+    (blur)="setFocused(false)"
+  >
+    <option class="ui-select__placeholder" value="" [disabled]="isRequired()" [selected]="selectedIndex() === -1">
+      {{ placeholder() }}
+    </option>
+    @for (group of groups(); track group.label) {
+      @if (group.label) {
+        <optgroup [label]="group.label">
+          @for (item of group.items; track item.index) {
+            <ng-container *ngTemplateOutlet="optionTpl; context: { $implicit: item }" />
+          }
+        </optgroup>
+      } @else {
+        @for (item of group.items; track item.index) {
+          <ng-container *ngTemplateOutlet="optionTpl; context: { $implicit: item }" />
+        }
+      }
+    }
+  </select>
+  @if (validation.state().status === 'valid') {
+    <svg class="ui-field__status-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  }
+  <svg class="ui-select__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+</div>
+<ui-field-message [messageId]="messageId" [state]="validation.state()" [hint]="hint()" />
+
+<ng-template #optionTpl let-item>
+  <option class="ui-select__option" [value]="item.index" [disabled]="!!item.option.disabled" [selected]="item.index === selectedIndex()">
+    @if (optionTemplate(); as custom) {
+      <ng-container *ngTemplateOutlet="custom.template; context: { $implicit: item.option, selected: item.index === selectedIndex() }" />
+    } @else {
+      {{ item.option.label }}
+    }
+  </option>
+</ng-template>

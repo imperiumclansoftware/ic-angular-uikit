@@ -1,0 +1,176 @@
+@if (toolbar()) {
+  <div class="ui-org__toolbar" role="toolbar" [attr.aria-label]="ariaLabel() + ' : affichage'">
+    @if (!isList()) {
+      <button type="button" class="ui-org__tool" (click)="setZoom(zoom() - 0.1)" [disabled]="zoom() <= 0.4" aria-label="Dézoomer">
+        <span aria-hidden="true">−</span>
+      </button>
+      <button type="button" class="ui-org__tool ui-org__tool--text" (click)="setZoom(1)" aria-label="Zoom à 100 %">{{ (zoom() * 100).toFixed(0) }} %</button>
+      <button type="button" class="ui-org__tool" (click)="setZoom(zoom() + 0.1)" [disabled]="zoom() >= 1.5" aria-label="Zoomer">
+        <span aria-hidden="true">+</span>
+      </button>
+      <span class="ui-org__sep" aria-hidden="true"></span>
+    }
+    <button type="button" class="ui-org__tool ui-org__tool--text" (click)="expandAll()">Tout déplier</button>
+    <button type="button" class="ui-org__tool ui-org__tool--text" (click)="collapseAll()">Tout replier</button>
+  </div>
+}
+
+<div class="ui-org__viewport" tabindex="0" role="region" [attr.aria-label]="ariaLabel()">
+  <div #canvas class="ui-org__canvas" [style.zoom]="isList() ? null : zoom()">
+    @if (links$().length) {
+      <!-- Traits sous les cartes (masqués par elles), libellés au-dessus. -->
+      <svg class="ui-org__links" aria-hidden="true" [attr.width]="canvasSize().width" [attr.height]="canvasSize().height">
+        @for (link of links$(); track link.key) {
+          <path class="ui-org__link" [attr.d]="link.d" />
+        }
+      </svg>
+      <svg class="ui-org__links ui-org__links--labels" aria-hidden="true" [attr.width]="canvasSize().width" [attr.height]="canvasSize().height">
+        @for (link of links$(); track link.key) {
+          @if (link.label) {
+            <text class="ui-org__link-label" [attr.x]="link.x" [attr.y]="link.y" text-anchor="middle" dominant-baseline="middle">{{ link.label }}</text>
+          }
+        }
+      </svg>
+    }
+    <ul class="ui-org__level ui-org__level--root">
+      @for (node of roots(); track node.unit.id) {
+        <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: node }" />
+      }
+    </ul>
+  </div>
+</div>
+
+<ng-template #nodeTpl let-node>
+  <li class="ui-org__node" [class.ui-org__node--transverse]="node.unit.relation === 'transverse'" [class.ui-org__node--attached]="node.unit.relation === 'attached'">
+    <span class="ui-org__stem" aria-hidden="true"></span>
+    <ng-container *ngTemplateOutlet="cardTpl; context: { $implicit: node }" />
+
+    @if (!isCollapsed(node.unit.id)) {
+      @if (node.staffLeft.length || node.staffRight.length) {
+        <div class="ui-org__staff">
+          <ul class="ui-org__level ui-org__level--staff ui-org__level--left" [attr.aria-label]="'Rattachés à ' + node.unit.name">
+            @for (child of node.staffLeft; track child.unit.id) {
+              <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: child }" />
+            }
+          </ul>
+          <span class="ui-org__staff-stem" [class.ui-org__staff-stem--end]="!node.children.length" aria-hidden="true"></span>
+          <ul class="ui-org__level ui-org__level--staff ui-org__level--right" [attr.aria-label]="'Rattachés à ' + node.unit.name">
+            @for (child of node.staffRight; track child.unit.id) {
+              <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: child }" />
+            }
+          </ul>
+        </div>
+      }
+      @if (node.children.length) {
+        <span class="ui-org__down" aria-hidden="true"></span>
+        <ul class="ui-org__level" [id]="childrenId(node.unit.id)" [attr.aria-label]="'Unités de ' + node.unit.name">
+          @for (child of node.children; track child.unit.id) {
+            <ng-container *ngTemplateOutlet="nodeTpl; context: { $implicit: child }" />
+          }
+        </ul>
+      }
+    }
+  </li>
+</ng-template>
+
+<ng-template #cardTpl let-node>
+  <div
+    class="ui-org__card"
+    [attr.data-org-unit]="node.unit.id"
+    [class]="'ui-org__card ui-org__card--' + (node.unit.tone ?? 'primary')"
+    [class.ui-org__card--selected]="selectedId() === node.unit.id"
+  >
+    @if (unitTemplate(); as custom) {
+      <ng-container *ngTemplateOutlet="custom.template; context: { $implicit: node.unit, node: node }" />
+    } @else {
+      <div class="ui-org__head">
+        @if (selectable()) {
+          <button type="button" class="ui-org__name" [attr.aria-pressed]="selectedId() === node.unit.id" (click)="select(node.unit)">
+            {{ node.unit.name }}
+          </button>
+        } @else {
+          <span class="ui-org__name">{{ node.unit.name }}</span>
+        }
+        @if (node.unit.code) {
+          <span class="ui-org__code">{{ node.unit.code }}</span>
+        }
+      </div>
+      @if (node.unit.relation === 'attached' || node.unit.relation === 'transverse') {
+        <span class="ui-org__relation">{{ relationLabel(node.unit) }}</span>
+      }
+      @if (linksByUnit().get(node.unit.id); as linked) {
+        <span class="ui-org__linked">↔ {{ linked.join(', ') }}</span>
+      }
+      @if (heads(node.unit).length || members(node.unit).length) {
+        <ul class="ui-org__people">
+          @for (person of heads(node.unit); track person.id) {
+            <li class="ui-org__person ui-org__person--head">
+              <ng-container *ngTemplateOutlet="personTpl; context: { $implicit: person, unit: node.unit }" />
+            </li>
+          }
+          @for (person of members(node.unit); track person.id) {
+            <li class="ui-org__person">
+              <ng-container *ngTemplateOutlet="personTpl; context: { $implicit: person, unit: node.unit }" />
+            </li>
+          }
+        </ul>
+      }
+      @if (hiddenMembers(node.unit); as hidden) {
+        <button type="button" class="ui-org__more" (click)="showAllPeople(node.unit.id)">
+          + {{ hidden }} autre{{ hidden > 1 ? 's' : '' }}<span class="ui-org__sr"> dans {{ node.unit.name }}</span>
+        </button>
+      }
+    }
+    @if (hasSubtree(node)) {
+      <button
+        type="button"
+        class="ui-org__toggle"
+        [attr.aria-expanded]="!isCollapsed(node.unit.id)"
+        [attr.aria-controls]="node.children.length ? childrenId(node.unit.id) : null"
+        [attr.aria-label]="(isCollapsed(node.unit.id) ? 'Déplier ' : 'Replier ') + node.unit.name + ' (' + node.descendants + ' unités)'"
+        (click)="toggle(node.unit.id)"
+      >
+        @if (isCollapsed(node.unit.id)) {
+          <span aria-hidden="true">+{{ node.descendants }}</span>
+        } @else {
+          <span aria-hidden="true">−</span>
+        }
+      </button>
+    }
+  </div>
+</ng-template>
+
+<ng-template #personTpl let-person let-unit="unit">
+  @if (personTemplate(); as custom) {
+    <ng-container *ngTemplateOutlet="custom.template; context: { $implicit: person, unit: unit }" />
+  } @else {
+    @if (peopleSelectable()) {
+      <button type="button" class="ui-org__person-body" (click)="selectPerson(person, unit)">
+        <ng-container *ngTemplateOutlet="personBody; context: { $implicit: person }" />
+      </button>
+    } @else {
+      <span class="ui-org__person-body">
+        <ng-container *ngTemplateOutlet="personBody; context: { $implicit: person }" />
+      </span>
+    }
+  }
+</ng-template>
+
+<ng-template #personBody let-person>
+  @if (person.photo) {
+    <img class="ui-org__avatar" [src]="person.photo" alt="" />
+  } @else {
+    <span class="ui-org__avatar" aria-hidden="true">{{ initials(person.name) }}</span>
+  }
+  <span class="ui-org__who">
+    <span class="ui-org__person-name">{{ person.name }}</span>
+    @if (person.title || person.head) {
+      <span class="ui-org__person-title">
+        @if (person.head) {
+          <span class="ui-org__head-tag">Responsable</span>
+        }
+        {{ person.title }}
+      </span>
+    }
+  </span>
+</ng-template>

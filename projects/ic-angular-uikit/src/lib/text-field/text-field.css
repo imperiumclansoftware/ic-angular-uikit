@@ -1,0 +1,33 @@
+.ui-text-field__input {
+  flex: 1;
+  min-width: 0;
+  height: calc(var(--_height) - 2px);
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ui-color-text);
+  font: inherit;
+}
+.ui-text-field__input::placeholder { color: var(--ui-color-text-subtle); opacity: 1; }
+.ui-text-field__input:disabled { cursor: not-allowed; }
+
+.ui-text-field__clear {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 2px;
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.ui-text-field__clear:hover { background: var(--ui-color-hover); color: var(--ui-color-text); }
+.ui-text-field__clear:focus-visible { outline: 2px solid var(--ui-color-focus-ring); }
+.ui-text-field__clear svg { width: 1rem; height: 1rem; }
+
+/* type="search" + clearable : un seul bouton d'effacement (celui du composant, accessible et thémé). */
+:host(.ui-text-field--clearable) .ui-text-field__input::-webkit-search-cancel-button { appearance: none; display: none; }
