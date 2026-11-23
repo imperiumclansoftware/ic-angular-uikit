@@ -1,0 +1,254 @@
+@let item = current();
+<div class="ui-mp__stage">
+  <!-- Un seul élément média natif pour l'audio et la vidéo (un seul graphe Web Audio possible par élément). -->
+  <video
+    #media
+    class="ui-mp__media"
+    playsinline
+    preload="metadata"
+    [hidden]="isEmbed() || isAudio()"
+    [attr.src]="item?.formats?.length ? null : fileSrc()"
+    [attr.poster]="!isAudio() && item?.artwork ? item?.artwork : null"
+    [attr.crossorigin]="crossOrigin()"
+    [attr.aria-label]="item?.title ?? null"
+    (click)="toggle()"
+    (play)="onMediaEvent($event)"
+    (pause)="onMediaEvent($event)"
+    (timeupdate)="onMediaEvent($event)"
+    (durationchange)="onMediaEvent($event)"
+    (loadedmetadata)="onMediaEvent($event)"
+    (volumechange)="onMediaEvent($event)"
+    (waiting)="onMediaEvent($event)"
+    (playing)="onMediaEvent($event)"
+    (canplay)="onMediaEvent($event)"
+    (ended)="onMediaEvent($event)"
+    (error)="fileSrc() && onMediaEvent($event)"
+  >
+    @if (!isEmbed()) {
+      @for (format of item?.formats ?? []; track format.src) {
+        <source [src]="format.src" [type]="format.type" />
+      }
+    }
+    @for (track of item?.tracks ?? []; track track.src) {
+      <track [src]="track.src" [attr.srclang]="track.srclang" [label]="track.label" [attr.kind]="track.kind ?? 'subtitles'" />
+    }
+  </video>
+
+  @if (isAudio() && item) {
+    <div class="ui-mp__audio-stage">
+      @if (item.artwork) {
+        <img class="ui-mp__artwork" [src]="item.artwork" alt="" />
+      } @else {
+        <div class="ui-mp__artwork ui-mp__artwork--empty" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" />
+          </svg>
+        </div>
+      }
+      @if (visualized()) {
+        <ui-audio-visualizer class="ui-mp__visualizer" [source]="this" [type]="vizType()" />
+      }
+    </div>
+  }
+
+  @if (isEmbed()) {
+    <div #embedHost class="ui-mp__embed">
+      @if (!embedLoaded()) {
+        <div class="ui-mp__consent">
+          @if (item?.artwork) {
+            <img class="ui-mp__consent-poster" [src]="item?.artwork" alt="" />
+          }
+          <div class="ui-mp__consent-box">
+            <p class="ui-mp__consent-title">{{ item?.title }}</p>
+            <button uiButton type="button" class="ui-mp__consent-play" (click)="acceptEmbed()">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
+              Lire la vidéo {{ providerName() }}
+            </button>
+            <p class="ui-mp__consent-note">
+              La lecture charge le lecteur de {{ providerName() }} ({{ resolved()?.provider === 'youtube' ? 'youtube-nocookie.com' : 'player.vimeo.com' }}),
+              qui peut déposer des cookies.
+            </p>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (buffering()) {
+    <ui-loader class="ui-mp__spinner" size="2.5rem" [type]="loaderType()" />
+  }
+</div>
+
+@if (error()) {
+  <p class="ui-mp__error" role="alert">{{ error() }}</p>
+}
+
+<div class="ui-mp__bar">
+  @if (item) {
+    <div class="ui-mp__meta">
+      <p class="ui-mp__title">{{ item.title }}</p>
+      @if (item.artist || item.album) {
+        <p class="ui-mp__artist">{{ item.artist }}{{ item.artist && item.album ? ' · ' : '' }}{{ item.album }}</p>
+      }
+    </div>
+  }
+
+  @if (!isEmbed() || embedLoaded()) {
+    <div class="ui-mp__controls">
+      <div class="ui-mp__buttons">
+        @if (sources().length > 1) {
+          <button type="button" class="ui-mp__btn" aria-label="Piste précédente" aria-keyshortcuts="Shift+P" [disabled]="!hasPrevious() && currentTime() <= 3" (click)="previous()">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5.5v13L9 12z" /></svg>
+          </button>
+        }
+        <button
+          type="button"
+          class="ui-mp__btn ui-mp__play"
+          aria-keyshortcuts="K"
+          [attr.aria-label]="playing() ? 'Pause' : 'Lecture'"
+          [disabled]="!item"
+          (click)="toggle()"
+        >
+          @if (playing()) {
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" /></svg>
+          } @else {
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
+          }
+        </button>
+        @if (sources().length > 1) {
+          <button type="button" class="ui-mp__btn" aria-label="Piste suivante" aria-keyshortcuts="Shift+N" [disabled]="!hasNext()" (click)="next()">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5.5v13L15 12z" /></svg>
+          </button>
+        }
+      </div>
+
+      <div class="ui-mp__timeline">
+        <span class="ui-mp__time" aria-hidden="true">{{ format(currentTime()) }}</span>
+        <input
+          type="range"
+          class="ui-mp__range ui-mp__seek"
+          min="0"
+          step="1"
+          aria-label="Position"
+          [max]="seekable() ? duration() : 0"
+          [value]="currentTime()"
+          [disabled]="!seekable()"
+          [attr.aria-valuetext]="speak(currentTime()) + ' sur ' + speak(duration())"
+          [style.--_progress]="(duration() > 0 ? (currentTime() / duration()) * 100 : 0) + '%'"
+          (input)="onSeekInput($event)"
+        />
+        <span class="ui-mp__time" aria-hidden="true">{{ format(duration()) }}</span>
+      </div>
+
+      <div class="ui-mp__buttons ui-mp__buttons--end">
+        <button
+          type="button"
+          class="ui-mp__btn"
+          aria-keyshortcuts="M"
+          [attr.aria-label]="muted() ? 'Rétablir le son' : 'Couper le son'"
+          [attr.aria-pressed]="muted()"
+          (click)="setMuted(!muted())"
+        >
+          @if (muted() || volume() === 0) {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 5 6 9H2v6h4l5 4z" fill="currentColor" /><path d="m22 9-6 6M16 9l6 6" />
+            </svg>
+          } @else {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 5 6 9H2v6h4l5 4z" fill="currentColor" /><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14" />
+            </svg>
+          }
+        </button>
+        @if (!isEmbed() || resolved()?.provider === 'youtube') {
+          <input
+            type="range"
+            class="ui-mp__range ui-mp__volume"
+            min="0"
+            max="100"
+            step="5"
+            aria-label="Volume"
+            [value]="muted() ? 0 : volume() * 100"
+            [attr.aria-valuetext]="(muted() ? 0 : round(volume() * 100)) + ' %'"
+            [style.--_progress]="(muted() ? 0 : volume() * 100) + '%'"
+            (input)="onVolumeInput($event)"
+          />
+        }
+        @if (!isEmbed()) {
+          @if (sources().length > 1) {
+            <button type="button" class="ui-mp__btn" [attr.aria-label]="repeatLabel()" [attr.aria-pressed]="repeat() !== 'none'" [title]="repeatLabel()" (click)="cycleRepeat()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m17 2 4 4-4 4" /><path d="M3 11v-1a4 4 0 0 1 4-4h14" /><path d="m7 22-4-4 4-4" /><path d="M21 13v1a4 4 0 0 1-4 4H3" />
+                @if (repeat() === 'one') {
+                  <path d="M11 10h1v4" stroke-width="1.8" />
+                }
+              </svg>
+            </button>
+          }
+          <label class="ui-mp__rate">
+            <span class="ui-mp__sr">Vitesse de lecture</span>
+            <select (change)="onRateChange($event)">
+              @for (r of rates; track r) {
+                <option [value]="'' + r" [selected]="r === rate()">{{ r }}×</option>
+              }
+            </select>
+          </label>
+          @if (hasCaptions()) {
+            <button type="button" class="ui-mp__btn" aria-label="Sous-titres" aria-keyshortcuts="C" [attr.aria-pressed]="captions()" (click)="captions.set(!captions())">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="5" width="18" height="14" rx="2" /><path d="M10 10.5a2 2 0 1 0 0 3M17 10.5a2 2 0 1 0 0 3" />
+              </svg>
+            </button>
+          }
+          @if (!isAudio() && pipSupported()) {
+            <button type="button" class="ui-mp__btn" aria-label="Image dans l'image" (click)="togglePictureInPicture()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="2" /><rect x="12" y="11" width="7" height="6" rx="1" fill="currentColor" />
+              </svg>
+            </button>
+          }
+          @if (!isAudio()) {
+            <button type="button" class="ui-mp__btn" aria-keyshortcuts="F" [attr.aria-label]="fullscreen() ? 'Quitter le plein écran' : 'Plein écran'" (click)="toggleFullscreen()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                @if (fullscreen()) {
+                  <path d="M8 3v3a2 2 0 0 1-2 2H3M21 8h-3a2 2 0 0 1-2-2V3M3 16h3a2 2 0 0 1 2 2v3M16 21v-3a2 2 0 0 1 2-2h3" />
+                } @else {
+                  <path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3" />
+                }
+              </svg>
+            </button>
+          }
+        }
+      </div>
+    </div>
+  }
+</div>
+
+@if (showPlaylist() && sources().length > 1) {
+  <ol class="ui-mp__playlist" [attr.aria-label]="'Liste de lecture (' + sources().length + ' médias)'">
+    @for (source of sources(); track $index; let i = $index) {
+      <li>
+        <button type="button" class="ui-mp__track" [attr.aria-current]="i === index() ? 'true' : null" (click)="goTo(i, true)">
+          <span class="ui-mp__track-number" aria-hidden="true">
+            @if (i === index() && playing()) {
+              <span class="ui-mp__eq"><span></span><span></span><span></span></span>
+            } @else {
+              {{ i + 1 }}
+            }
+          </span>
+          <span class="ui-mp__track-text">
+            <span class="ui-mp__track-title">{{ source.title }}</span>
+            @if (source.artist) {
+              <span class="ui-mp__track-artist">{{ source.artist }}</span>
+            }
+          </span>
+          @if (resolvedOf(source) !== 'file') {
+            <span class="ui-mp__track-badge">{{ resolvedOf(source) === 'youtube' ? 'YouTube' : 'Vimeo' }}</span>
+          }
+        </button>
+      </li>
+    }
+  </ol>
+}
+
+<ng-content />
+<p class="ui-mp__sr" aria-live="polite" aria-atomic="true">{{ announcement() }}</p>

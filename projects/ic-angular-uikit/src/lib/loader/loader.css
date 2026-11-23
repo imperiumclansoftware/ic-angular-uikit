@@ -1,0 +1,147 @@
+:host {
+  --ui-loader-size: 2rem;
+  --_c: var(--ui-loader-color, var(--ui-color-primary));
+  --_t: var(--ui-loader-track, color-mix(in srgb, var(--_c) 18%, transparent));
+  --_s: var(--ui-loader-duration-scale, 1);
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: var(--ui-loader-size);
+  height: var(--ui-loader-size);
+  color: var(--_c);
+  vertical-align: middle;
+}
+:host(.ui-loader--hidden) { visibility: hidden; }
+.ui-loader__sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.ui-loader__part { display: block; background: currentColor; }
+
+/* Anneau à piste */
+:host(.ui-loader--spinner)::before {
+  content: '';
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  border: max(2px, calc(var(--ui-loader-size) * 0.12)) solid var(--_t);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: ui-loader-spin calc(0.8s * var(--_s)) linear infinite;
+}
+
+/* Comète : arc en dégradé */
+:host(.ui-loader--ring)::before {
+  content: '';
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 10%, currentColor);
+  mask: radial-gradient(farthest-side, transparent calc(100% - max(2px, var(--ui-loader-size) * 0.14)), #000 calc(100% - max(2px, var(--ui-loader-size) * 0.14) + 0.5px));
+  animation: ui-loader-spin calc(1s * var(--_s)) linear infinite;
+}
+
+/* Points rebondissants */
+:host(.ui-loader--dots) { grid-auto-flow: column; justify-content: center; gap: calc(var(--ui-loader-size) * 0.1); }
+:host(.ui-loader--dots) .ui-loader__part {
+  width: calc(var(--ui-loader-size) * 0.22);
+  height: calc(var(--ui-loader-size) * 0.22);
+  border-radius: 50%;
+  animation: ui-loader-bounce calc(1.2s * var(--_s)) ease-in-out calc(var(--i) * 0.16s * var(--_s)) infinite both;
+}
+
+/* Ondes concentriques */
+:host(.ui-loader--pulse) .ui-loader__part {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  animation: ui-loader-pulse calc(1.6s * var(--_s)) cubic-bezier(0.2, 0.6, 0.4, 1) calc(var(--i) * 0.8s * var(--_s)) infinite both;
+}
+
+/* Barres d'égaliseur */
+:host(.ui-loader--bars) { grid-auto-flow: column; justify-content: center; gap: calc(var(--ui-loader-size) * 0.08); }
+:host(.ui-loader--bars) .ui-loader__part {
+  width: calc(var(--ui-loader-size) * 0.14);
+  height: 80%;
+  border-radius: 2px;
+  animation: ui-loader-bar calc(1s * var(--_s)) ease-in-out calc(var(--i) * 0.12s * var(--_s)) infinite both;
+}
+
+/* Satellites */
+:host(.ui-loader--orbit) .ui-loader__part {
+  grid-area: 1 / 1;
+  width: 100%;
+  height: 100%;
+  background: none;
+  animation: ui-loader-spin calc((1.1s + var(--i) * 0.6s) * var(--_s)) linear infinite;
+}
+:host(.ui-loader--orbit) .ui-loader__part::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: calc(50% - var(--ui-loader-size) * 0.13);
+  width: calc(var(--ui-loader-size) * 0.26);
+  height: calc(var(--ui-loader-size) * 0.26);
+  border-radius: 50%;
+  background: currentColor;
+}
+:host(.ui-loader--orbit) .ui-loader__part { position: relative; }
+:host(.ui-loader--orbit) .ui-loader__part + .ui-loader__part { scale: 0.6; opacity: 0.6; animation-direction: reverse; }
+
+/* Grille 3 × 3 en diagonale */
+:host(.ui-loader--grid) { grid-template: repeat(3, 1fr) / repeat(3, 1fr); gap: 10%; }
+:host(.ui-loader--grid) .ui-loader__part {
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  animation: ui-loader-grid calc(1.3s * var(--_s)) ease-in-out calc(var(--i) * 0.1s * var(--_s)) infinite both;
+}
+
+/* Barre indéterminée (toute la largeur) */
+:host(.ui-loader--line) {
+  display: block;
+  width: 100%;
+  height: max(3px, calc(var(--ui-loader-size) * 0.125));
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--_t);
+}
+:host(.ui-loader--line) .ui-loader__part {
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  animation: ui-loader-slide calc(1.4s * var(--_s)) ease-in-out infinite;
+}
+
+/* Reflet (squelette) : remplit son conteneur */
+:host(.ui-loader--skeleton) {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 1em;
+  overflow: hidden;
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-loader-track, var(--ui-color-surface-sunken));
+}
+:host(.ui-loader--skeleton)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, color-mix(in srgb, var(--ui-color-text) 8%, transparent) 50%, transparent 80%);
+  animation: ui-loader-shimmer calc(1.5s * var(--_s)) ease-in-out infinite;
+}
+
+@keyframes ui-loader-spin { to { rotate: 1turn; } }
+@keyframes ui-loader-bounce { 0%, 80%, 100% { transform: scale(0.5); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+@keyframes ui-loader-pulse { 0% { transform: scale(0.1); opacity: 0.9; } 100% { transform: scale(1); opacity: 0; } }
+@keyframes ui-loader-bar { 0%, 100% { transform: scaleY(0.35); opacity: 0.5; } 50% { transform: scaleY(1); opacity: 1; } }
+@keyframes ui-loader-grid { 0%, 70%, 100% { transform: scale(1); opacity: 1; } 35% { transform: scale(0.4); opacity: 0.35; } }
+@keyframes ui-loader-slide { 0% { translate: -100% 0; } 100% { translate: 250% 0; } }
+@keyframes ui-loader-shimmer { from { translate: -100% 0; } to { translate: 100% 0; } }
+@keyframes ui-loader-fade { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+/* Animations réduites : plus de rotation ni de mouvement, un simple battement lent de l'opacité. */
+@media (prefers-reduced-motion: reduce) {
+  :host::before, .ui-loader__part, .ui-loader__part::before { animation: none !important; }
+  :host(.ui-loader--line) .ui-loader__part { width: 100%; }
+  :host { animation: ui-loader-fade calc(2s * var(--_s)) ease-in-out infinite; }
+}

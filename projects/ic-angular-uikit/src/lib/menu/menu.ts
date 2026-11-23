@@ -21,7 +21,7 @@ import {
 import { uniqueId } from '../core/id';
 import { UiIcon } from '../icon/icon';
 import { UiSidebar } from '../layout/sidebar';
-import { UI_MENU_HOST } from './menu-host';
+import { UI_CONTEXT_MENU, UI_MENU_HOST } from './menu-host';
 
 /** Disposition d'un menu : liste verticale (colonne, tiroir) ou barre horizontale (en-tête). */
 export type UiMenuOrientation = 'vertical' | 'horizontal';
@@ -220,6 +220,8 @@ export class UiMenuGroup {
       class="ui-submenu__trigger"
       [id]="triggerId"
       [disabled]="disabled()"
+      [attr.role]="context ? 'menuitem' : null"
+      [attr.aria-haspopup]="context ? 'menu' : null"
       [attr.aria-expanded]="expanded()"
       [attr.aria-controls]="panelId"
       [attr.popovertarget]="flyout() ? panelId : null"
@@ -238,10 +240,12 @@ export class UiMenuGroup {
         <path d="m9 6 6 6-6 6" />
       </svg>
     </button>
+    <!-- Panneau : Échap délégué depuis les éléments du menu (focalisables). -->
+    <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
     <div
       #panel
       class="ui-submenu__panel"
-      role="group"
+      [attr.role]="context ? 'menu' : 'group'"
       [id]="panelId"
       [class.ui-submenu__panel--flyout]="flyout()"
       [attr.aria-labelledby]="triggerId"
@@ -270,6 +274,8 @@ export class UiSubmenu {
 
   private readonly menu = inject(UiMenu, { optional: true });
   private readonly parent = inject(UiSubmenu, { optional: true, skipSelf: true });
+  /** @internal Dans un menu contextuel : rôles de menu, panneaux à côté. */
+  protected readonly context = inject(UI_CONTEXT_MENU, { optional: true });
   private readonly injector = inject(Injector);
   private readonly document = inject(DOCUMENT);
   private readonly host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
@@ -280,7 +286,7 @@ export class UiSubmenu {
   protected readonly panelId = `${this.triggerId}-panel`;
   protected readonly anchorName = `--${this.triggerId}`;
   /** Bouton de menu autonome (hors `ui-menu`) : apparence de bouton, clavier propre. */
-  protected readonly standalone = !this.menu && !this.parent;
+  protected readonly standalone = !this.menu && !this.parent && !this.context;
   /** Niveau d'imbrication (0 = premier niveau). */
   readonly depth: number = this.parent ? this.parent.depth + 1 : 0;
   /** Le sous-menu contient l'élément courant (`aria-current="page"`, `.is-active`, `active`). */
@@ -293,6 +299,7 @@ export class UiSubmenu {
   /** Panneau flottant (popover) plutôt que dépliage sur place. */
   readonly flyout: Signal<boolean> = computed((): boolean => {
     if (this.parent) return this.parent.flyout();
+    if (this.context) return true;
     return !this.menu || this.menu.horizontal() || this.menu.rail();
   });
   /** @internal Premier niveau d'un menu horizontal. */
@@ -302,7 +309,7 @@ export class UiSubmenu {
   readonly resolvedPlacement = computed<'below' | 'side'>(() => {
     const wanted = this.placement();
     if (wanted !== 'auto') return wanted;
-    if (this.parent) return 'side';
+    if (this.parent || this.context) return 'side';
     if (this.menu) return this.menu.horizontal() ? 'below' : 'side';
     return this.inVerticalToolbar() ? 'side' : 'below';
   });
@@ -436,7 +443,8 @@ export class UiSubmenu {
   }
 
   protected onHover(enter: boolean): void {
-    if (!this.flyout() || this.disabled() || !this.menu?.openOnHover()) return;
+    // Survol : sur demande dans un menu de navigation, toujours dans un menu contextuel (comportement des systèmes).
+    if (!this.flyout() || this.disabled() || !(this.menu?.openOnHover() || this.context)) return;
     clearTimeout(this.hoverTimer);
     this.hoverTimer = setTimeout(() => (enter ? this.open() : this.close()), enter ? 120 : 300);
   }
@@ -494,6 +502,16 @@ function forwardSubmenu(): typeof UiSubmenu {
   return UiSubmenu;
 }
 
+/** Séparateur entre deux groupes d'éléments d'un menu (rôle `separator`). */
+@Component({
+  selector: 'ui-menu-separator',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { role: 'separator', class: 'ui-menu-separator' },
+  template: ``,
+  styles: `:host { display: block; flex: none; height: 1px; margin: var(--ui-space-1) var(--ui-space-2); background: var(--ui-color-border); }`,
+})
+export class UiMenuSeparator {}
+
 /**
  * Élément de menu, sur un lien ou un bouton natif (`<a uiMenuItem routerLink="/">`).
  * Avec le routeur : `routerLinkActive="is-active" ariaCurrentWhenActive="page"`, ou l'input `active`.
@@ -514,11 +532,28 @@ function forwardSubmenu(): typeof UiSubmenu {
     '[class.ui-menu-item--active]': 'active()',
     '[class.ui-menu-item--rail]': 'rail()',
     '[class.ui-menu-item--top]': 'top()',
+    '[class.ui-menu-item--danger]': 'tone() === "danger"',
+    '[class.ui-menu-item--checkable]': 'checked() !== undefined',
+    '[attr.role]': 'role()',
+    '[attr.aria-checked]': 'context && checked() !== undefined ? checked() : null',
+    '[attr.aria-pressed]': '!context && isButton && checked() !== undefined ? checked() : null',
+    '[attr.aria-keyshortcuts]': 'keyshortcuts() ?? null',
     '[attr.aria-current]': 'active() ? "page" : null',
     '[attr.title]': 'rail() ? text() : null',
     '(click)': 'onClick()',
   },
   template: `
+    @if (checked() !== undefined) {
+      <span class="ui-menu-item__check" aria-hidden="true">
+        @if (checked()) {
+          @if (checkMode() === 'radio') {
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="4.5" /></svg>
+          } @else {
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+          }
+        }
+      </span>
+    }
     @if (icon(); as name) {
       <ui-icon class="ui-menu-item__icon" [name]="name" />
     } @else if (rail()) {
@@ -526,6 +561,9 @@ function forwardSubmenu(): typeof UiSubmenu {
     }
     <span class="ui-menu-item__label"><ng-content /></span>
     <span class="ui-menu-item__badge"><ng-content select="[uiMenuBadge]" /></span>
+    @if (shortcut()) {
+      <kbd class="ui-menu-item__shortcut" aria-hidden="true">{{ shortcut() }}</kbd>
+    }
   `,
   styleUrl: './menu-item.css',
 })
@@ -534,11 +572,36 @@ export class UiMenuItem {
   readonly icon = input<string>();
   /** Élément courant (`aria-current="page"`). Inutile avec `routerLinkActive` + `ariaCurrentWhenActive`. */
   readonly active = input(false, { transform: booleanAttribute });
+  /**
+   * Élément cochable : `true` / `false` affiche l'état (coche ou pastille), `undefined` (défaut) n'en affiche pas.
+   * Dans un menu contextuel : rôle `menuitemcheckbox` / `menuitemradio` et `aria-checked`.
+   */
+  readonly checked = input<boolean | undefined, unknown>(undefined, {
+    transform: (v: unknown) => (v === undefined || v === null ? undefined : booleanAttribute(v)),
+  });
+  /** Type d'élément cochable : case (`checkbox`, coche) ou choix exclusif dans un groupe (`radio`, pastille). */
+  readonly checkMode = input<'checkbox' | 'radio'>('checkbox');
+  /** Raccourci clavier affiché en fin de ligne (`Ctrl+C`), à titre indicatif : le raccourci reste à implémenter. */
+  readonly shortcut = input<string>();
+  /** Raccourci au format ARIA (`Control+C`), annoncé par les lecteurs d'écran. */
+  readonly keyshortcuts = input<string>();
+  /** Ton : `danger` pour une action destructrice (« Supprimer »). */
+  readonly tone = input<'default' | 'danger'>('default');
 
   private readonly sidebar = inject(UiSidebar, { optional: true });
   private readonly menu = inject(UiMenu, { optional: true });
   private readonly submenu = inject(UiSubmenu, { optional: true });
+  /** @internal */
+  protected readonly context = inject(UI_CONTEXT_MENU, { optional: true });
   private readonly host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
+  protected readonly isButton = this.host.tagName === 'BUTTON';
+  /** Rôle ARIA dans un menu contextuel (sinon : rôle natif du lien ou du bouton). */
+  protected readonly role = computed(() => {
+    if (!this.context) return null;
+    const checked = this.checked();
+    if (checked === undefined) return 'menuitem';
+    return this.checkMode() === 'radio' ? 'menuitemradio' : 'menuitemcheckbox';
+  });
   protected readonly rail = computed(() => !this.submenu && (this.menu ? this.menu.rail() : (this.sidebar?.isRail() ?? false)));
   /** Premier niveau d'un menu horizontal (indicateur sous l'élément). */
   protected readonly top = computed(() => !this.submenu && !!this.menu?.horizontal());
@@ -552,11 +615,15 @@ export class UiMenuItem {
 
   protected onClick(): void {
     this.submenu?.closeCascade();
+    this.context?.close(true);
   }
 }
 
-/** Éléments navigables d'un niveau : ceux du conteneur, hors panneaux flottants imbriqués et sous-menus repliés. */
-function levelItems(container: HTMLElement): HTMLElement[] {
+/**
+ * Éléments navigables d'un niveau : ceux du conteneur, hors panneaux flottants imbriqués et sous-menus repliés.
+ * @internal
+ */
+export function levelItems(container: HTMLElement): HTMLElement[] {
   return Array.from(container.querySelectorAll<HTMLElement>(ITEM_SELECTOR)).filter((el) => {
     const flyPanel = el.parentElement?.closest('.ui-submenu__panel--flyout');
     if (flyPanel && flyPanel !== container && container.contains(flyPanel)) return false;
@@ -570,8 +637,9 @@ function levelItems(container: HTMLElement): HTMLElement[] {
  * Clavier d'un menu (délégué depuis sa racine). Renvoie `true` si la touche a été traitée.
  * `navigateRoot` = les flèches parcourent le premier niveau (faux pour un bouton de menu autonome, qui laisse
  * ces touches à la barre d'outils qui le contient).
+ * @internal
  */
-function handleMenuKeydown(event: KeyboardEvent, root: HTMLElement, rootHorizontal: boolean, navigateRoot: boolean): boolean {
+export function handleMenuKeydown(event: KeyboardEvent, root: HTMLElement, rootHorizontal: boolean, navigateRoot: boolean): boolean {
   if (event.altKey || event.ctrlKey || event.metaKey) return false;
   const target = event.target as HTMLElement;
   if (!target.matches?.(ITEM_SELECTOR)) return false;

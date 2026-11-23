@@ -1,0 +1,7 @@
+# config/services.yaml (extrait) — client Claude, clé lue dans l'environnement du serveur.
+# Développement : ANTHROPIC_API_KEY dans .env.local (non versionné) ; production : secrets Symfony
+# (bin/console secrets:set ANTHROPIC_API_KEY) ou variable d'environnement. Jamais dans le code ni côté navigateur.
+services:
+    Anthropic\Client:
+        arguments:
+            $apiKey: '%env(ANTHROPIC_API_KEY)%'

@@ -48,3 +48,6 @@
 .example__split .example__preview + .example__preview { border-left: 1px solid var(--ui-color-border); }
 
 .example__code { border-top: 1px solid var(--ui-color-border); }
+
+/* Onglets des fichiers de l'exemple (exemple, données…). */
+.example__files { display: block; border-top: 1px solid var(--ui-color-border); padding-top: var(--ui-space-1); background: var(--ui-color-surface-sunken); }

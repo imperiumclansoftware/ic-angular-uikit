@@ -57,6 +57,13 @@ import {
   Newspaper,
   ShoppingCart,
   Code,
+  Pencil,
+  LayoutGrid,
+  List,
+  ArrowDownUp,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide';
 import { bootstrapIcons, fontAwesomeFont, lucideIcons, materialSymbols } from 'ic-angular-uikit';
 
@@ -75,5 +82,6 @@ export const DOC_ICON_SETS = [
     Calendar, ChartColumn, CircleHelp, FileText, Folder, Inbox, LayoutDashboard, LogOut, Menu, MessageSquare,
     PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen, Users, X,
     ArrowRight, Bell, Check, Download, Eye, Heart, House, Info, Lock, Mail, Plus, Search, Settings, Star, Trash2, Upload, User,
-    Bold, Italic, Underline, TextAlignStart, TextAlignCenter, TextAlignEnd, Undo2, Redo2, Box, Package, Building2, BookOpen, Ellipsis, Printer, Share2, Copy, Scissors, ClipboardPaste, Image, Table, Link, LifeBuoy, Newspaper, ShoppingCart, Code }),
+    Bold, Italic, Underline, TextAlignStart, TextAlignCenter, TextAlignEnd, Undo2, Redo2, Box, Package, Building2, BookOpen, Ellipsis, Printer, Share2, Copy, Scissors, ClipboardPaste, Image, Table, Link, LifeBuoy, Newspaper, ShoppingCart, Code,
+    Pencil, LayoutGrid, List, ArrowDownUp, RefreshCw, ChevronLeft, ChevronRight }),
 ];

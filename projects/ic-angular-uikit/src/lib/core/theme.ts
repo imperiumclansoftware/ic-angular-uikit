@@ -15,9 +15,10 @@ import { UiSeason, seasonOf } from './season';
 
 /**
  * Thèmes fournis par la librairie. `season-light` et `season-dark` changent de couleurs selon la saison
- * (date du jour). Un thème personnalisé peut être ajouté via `UiKitConfig.themes`.
+ * (date du jour). `imperium-dark` : thème néo-héroïque d'Imperium Clan (or antique, arabesques). Un thème
+ * personnalisé peut être ajouté via `UiKitConfig.themes`.
  */
-export type UiBuiltInTheme = 'light' | 'dark' | 'season-light' | 'season-dark';
+export type UiBuiltInTheme = 'light' | 'dark' | 'season-light' | 'season-dark' | 'imperium-dark';
 
 /** Préférence de thème : un thème concret, ou `system` pour suivre `prefers-color-scheme`. */
 export type UiThemePreference = string;
@@ -45,7 +46,7 @@ export const UI_KIT_CONFIG = new InjectionToken<Required<UiKitConfig>>('UI_KIT_C
   providedIn: 'root',
   factory: () => ({
     defaultTheme: 'system',
-    themes: ['light', 'dark', 'season-light', 'season-dark'],
+    themes: ['light', 'dark', 'season-light', 'season-dark', 'imperium-dark'],
     storageKey: 'ic-angular-uikit-theme',
     hemisphere: 'north',
     seasonEffects: 'auto',
@@ -187,7 +188,7 @@ export function provideUiKit(config: UiKitConfig = {}): EnvironmentProviders {
       provide: UI_KIT_CONFIG,
       useValue: {
         defaultTheme: config.defaultTheme ?? 'system',
-        themes: config.themes ?? ['light', 'dark', 'season-light', 'season-dark'],
+        themes: config.themes ?? ['light', 'dark', 'season-light', 'season-dark', 'imperium-dark'],
         storageKey: config.storageKey === undefined ? 'ic-angular-uikit-theme' : config.storageKey,
         hemisphere: config.hemisphere ?? 'north',
         seasonEffects: config.seasonEffects ?? 'auto',

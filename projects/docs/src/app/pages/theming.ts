@@ -4,7 +4,7 @@ import { ThemeService, UI_SEASON_LABELS, UiAlert, UiButton, UiSeason, UiSwitch, 
 import { TOKENS } from '../generated/tokens';
 import { ApiView } from '../shared/api-view';
 import { CodeBlock } from '../shared/code-block';
-import { CORE_GROUP } from '../shared/nav';
+import { CORE_GROUP } from '../shared/api-groups';
 
 @Component({
   selector: 'doc-theming',

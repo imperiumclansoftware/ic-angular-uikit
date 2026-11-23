@@ -55,6 +55,8 @@ La documentation est tirée du code — il n'y a rien à maintenir à la main :
 - **Masquer** un membre : `@internal`.
 - **Exemple** : `projects/docs/src/app/examples/<dossier>/<nom>.example.ts` ; la 1re ligne de la JSDoc est le titre,
   la suite la description, `@order N` fixe l'ordre. La classe affichée est celle dont le nom finit par `Example`.
+  Les fichiers locaux qu'il importe (`./donnees`, données, composants annexes) sont ajoutés automatiquement à « Voir
+  le code », un onglet par fichier : mettez les données d'exemple dans un fichier à part plutôt que dans `shared/`.
 
 Ajouter un composant = créer `projects/ic-angular-uikit/src/lib/<nom>/<nom>.ts`, l'exporter dans `public-api.ts` : la
 page `/components/<nom>` apparaît.
@@ -62,6 +64,39 @@ page `/components/<nom>` apparaît.
 Règles du projet : composants standalone `OnPush` à base de signaux, préfixe `ui`, aucun `innerHTML` ni
 `bypassSecurityTrust*`, WCAG 2.1 AA (contrastes vérifiés dans tous les thèmes, clavier, axe-core sans violation),
 styles qui ne fuient pas dans les instances imbriquées du même composant (combinateurs enfants).
+
+## Menu contextuel et éditeur de texte riche
+
+- `ui-context-menu` + `[uiContextMenuTrigger]` : clic droit, appui long (tactile), touche Menu / Maj+F10 ;
+  motif ARIA « menu » (réutilise `uiMenuItem`, `ui-submenu`, `ui-menu-group`, `ui-menu-separator`, avec
+  `checked`, `checkMode`, `shortcut`, `tone="danger"`). Popover natif positionné au pointeur.
+- `ui-rich-text-editor` (champ de formulaire, valeur = HTML nettoyé) et `ui-rich-text` (affichage) : analyse à liste
+  blanche maison (`rich-text-html.ts`, sans `innerHTML` / `DOMParser`, compatible Trusted Types), listes et historique
+  gérés par le composant, `execCommand` limité aux marques et aux blocs. Le serveur doit renettoyer : onglet
+  « Côté serveur » (Symfony HtmlSanitizer, Node sanitize-html, validés par un banc de 31 tests).
+
+## Conversation avec une IA
+
+- `ui-chat` : fil en `role="log"` sans annonce de chaque morceau du flux ; la réponse complète passe par une zone
+  `aria-live` dédiée. Rendu Markdown maison (`chat-markdown.ts`, `createElement` uniquement, liens filtrés par
+  `safeRichTextUrl`, images jamais chargées), au plus une fois par image d'animation pendant le flux.
+- Transport : `Observable`, `AsyncIterable` ou `Promise` ; `uiChatHttpTransport` lit le NDJSON avec `HttpClient`
+  (`reportProgress` + `partialText`). Arrêter désabonne / déclenche l'`AbortSignal`.
+- Exemples serveur (`backend-examples/chat`) : Symfony et Node.js avec le SDK d'Anthropic (`claude-opus-5-5`, effort
+  explicite, repli côté serveur `fallbacks: "default"`), validés par un banc de 40 tests contre un faux service SSE
+  local (aucun appel facturé).
+- La documentation charge un index léger pour le menu (`generated/nav-index.ts`) ; l'API complète
+  (`generated/api.ts`) n'est importée que par les pages chargées à la demande (`shared/api-groups.ts`).
+
+## Lecteur multimédia
+
+- `ui-media-player` : un seul `<video>` natif pour l'audio et la vidéo (graphe Web Audio unique pour les
+  visualisations, créé seulement si toutes les sources sont de même origine ou en CORS, sinon le son serait coupé) ;
+  YouTube / Vimeo : iframe créée par `Renderer2` à partir de l'identifiant validé (pas de `bypassSecurityTrust`),
+  chargée après consentement, pilotée par `postMessage` (origine et fenêtre vérifiées).
+- `UiMediaHub` : lecteur actif de la page (suivi par `ui-mini-player`), lecture exclusive.
+- Médias de démonstration servis par le site (`projects/docs/public/demo/media`, morceaux synthétisés) ; CSP de la
+  doc : `frame-src` limité aux deux lecteurs ; nginx sert `.vtt` en `text/vtt`.
 
 ## Site de documentation en Docker
 

@@ -3,7 +3,7 @@ import { EXAMPLES } from '../generated/examples';
 import { ApiView } from '../shared/api-view';
 import { CodeBlock } from '../shared/code-block';
 import { ExampleViewer } from '../shared/example-viewer';
-import { VALIDATION_GROUP } from '../shared/nav';
+import { VALIDATION_GROUP } from '../shared/api-groups';
 
 @Component({
   selector: 'doc-validation',

@@ -1,4 +1,6 @@
-import { ChangeDetectionStrategy, Component, booleanAttribute, input } from '@angular/core';
+import { UiLoader } from '../loader/loader';
+import { UiLoaderDefaults, UiLoaderType, compactLoaderType } from '../loader/loader-config';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, inject, input } from '@angular/core';
 import { UiSize } from '../core/types';
 import { UiIcon } from '../icon/icon';
 
@@ -19,7 +21,7 @@ export type UiButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 's
   // Sélecteur d'attribut volontaire : on garde le <button>/<a> natif (sémantique, focus, formulaires).
   // eslint-disable-next-line @angular-eslint/component-selector
   selector: 'button[uiButton], a[uiButton]',
-  imports: [UiIcon],
+  imports: [UiIcon, UiLoader],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     class: 'ui-button',
@@ -32,7 +34,7 @@ export type UiButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 's
   },
   template: `
     @if (loading()) {
-      <span class="ui-button__spinner" aria-hidden="true"></span>
+      <ui-loader class="ui-button__spinner" decorative size="1em" [type]="loaderType()" />
     }
     @if (icon(); as name) {
       <ui-icon [name]="name" />
@@ -56,6 +58,10 @@ export class UiButton {
   readonly size = input<UiSize>('md');
   /** Affiche un indicateur de chargement et bloque les clics (`aria-busy`). */
   readonly loading = input(false, { transform: booleanAttribute });
+  /** Loader affiché avec `loading` (défaut : celui de l'application, voir `provideUiLoader`). */
+  readonly loader = input<UiLoaderType>();
+  private readonly loaderDefaults = inject(UiLoaderDefaults);
+  protected readonly loaderType = computed(() => compactLoaderType(this.loader(), this.loaderDefaults));
   /** Occupe toute la largeur disponible. */
   readonly block = input(false, { transform: booleanAttribute });
   /** Icône avant le libellé : `préfixe:nom` d'un jeu déclaré avec `provideUiIcons()` (`fa:plus`, `material:add`…). */

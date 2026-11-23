@@ -1,0 +1,68 @@
+{
+  "intro": "`ui-chat` ne parle jamais directement au fournisseur d'IA : **la clé d'API reste sur votre serveur** (variable d'environnement ou coffre de secrets), jamais dans le code Angular, le bundle ou le navigateur. Le navigateur envoie l'historique à **votre** API, qui ajoute ses propres consignes (prompt système), appelle le modèle et renvoie la réponse en flux.\n\nContrat des exemples : `POST /api/chat` `{ messages: [{ role, content }, …] }` → `200 application/x-ndjson`, une ligne JSON par morceau : `{\"text\":\"…\"}`, et `{\"error\":\"…\"}` si la réponse ne peut pas aboutir (refus, longueur maximale, service indisponible). C'est le format lu par `uiChatHttpTransport(http, '/api/chat')`.\n\nRègles appliquées : authentification ; CSRF « double submit » (cookie `XSRF-TOKEN` = en-tête `X-XSRF-TOKEN`) ; **limite de débit** par utilisateur (10 demandes par minute) pour maîtriser les coûts ; historique validé (1 à 40 messages, alternance utilisateur / assistant commençant et finissant par l'utilisateur, 8 000 caractères par message, 60 000 au total ; seuls `role` et `content` sont transmis) ; **prompt système défini côté serveur**, jamais par le client ; plafond de jetons par réponse ; appel annulé quand le client se déconnecte (bouton Arrêter) ; erreurs du fournisseur journalisées côté serveur sans le contenu des messages, et renvoyées au navigateur sous forme d'un message générique.\n\nModèle : `claude-opus-5-5` avec `output_config.effort` explicite et le **repli côté serveur** (`fallbacks: \"default\"`, bêta `server-side-fallback-2026-07-01`) : si le modèle décline une demande pour raison de politique, l'API la rejoue sur le modèle de repli prévu au lieu de renvoyer un refus.\n\nCodes d'erreur avant le flux : `400` (JSON mal formé), `401` (non connecté), `403` (jeton CSRF), `413` (trop volumineux), `415` (pas du JSON), `422` (historique invalide), `429` (trop de demandes, avec `Retry-After`).",
+  "backends": [
+    {
+      "id": "angular",
+      "title": "Angular (client)",
+      "notes": "`uiChatHttpTransport` envoie l'historique et lit le flux NDJSON au fil de l'eau (`HttpClient`, intercepteurs et jeton CSRF compris). Arrêter désabonne la requête. L'historique reste en mémoire : pas de `localStorage`, il peut contenir des données personnelles.",
+      "files": [
+        {
+          "file": "angular.ts",
+          "name": "app.config.ts + assistant.ts",
+          "language": "ts"
+        }
+      ]
+    },
+    {
+      "id": "symfony",
+      "title": "Symfony",
+      "install": "composer require anthropic-ai/sdk symfony/rate-limiter symfony/validator symfony/serializer symfony/security-bundle phpdocumentor/reflection-docblock",
+      "notes": "SDK PHP officiel d'Anthropic, réponse en `StreamedResponse` (vidage après chaque ligne, `X-Accel-Buffering: no` pour Nginx). DTO validé par `#[MapRequestPayload]` (`Assert\\Valid` sur chaque message, `Assert\\Callback` pour l'alternance), `#[IsGranted]`, **RateLimiter** (`sliding_window`) par identifiant d'utilisateur. Déconnexion détectée avec `connection_aborted()` : le flux vers l'API est fermé. Le CSRF est assuré par le `CsrfDoubleSubmitSubscriber` du secure-skeleton.",
+      "files": [
+        {
+          "file": "symfony-services.yaml",
+          "name": "config/services.yaml",
+          "language": "sh"
+        },
+        {
+          "file": "symfony-rate_limiter.yaml",
+          "name": "config/packages/rate_limiter.yaml",
+          "language": "sh"
+        },
+        {
+          "file": "symfony-ChatInput.php",
+          "name": "src/Dto/ChatInput.php",
+          "language": "php"
+        },
+        {
+          "file": "symfony-ChatMessageInput.php",
+          "name": "src/Dto/ChatMessageInput.php",
+          "language": "php"
+        },
+        {
+          "file": "symfony-ChatController.php",
+          "name": "src/Controller/ChatController.php",
+          "language": "php"
+        },
+        {
+          "file": "symfony-JsonBodyLimitSubscriber.php",
+          "name": "src/EventSubscriber/JsonBodyLimitSubscriber.php",
+          "language": "php"
+        }
+      ]
+    },
+    {
+      "id": "node",
+      "title": "Node.js",
+      "install": "npm install express@5 @anthropic-ai/sdk",
+      "notes": "Express 5 et le SDK TypeScript officiel d'Anthropic (`beta.messages.stream`). La clé est lue dans `ANTHROPIC_API_KEY`. Limite de débit en mémoire (une seule instance ; Redis au-delà). Fermeture de la connexion → `stream.abort()`. L'authentification (`currentUserId`) est à brancher sur votre session.",
+      "files": [
+        {
+          "file": "node-express.mjs",
+          "name": "server.mjs",
+          "language": "ts"
+        }
+      ]
+    }
+  ]
+}

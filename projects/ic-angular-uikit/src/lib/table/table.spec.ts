@@ -1,6 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { UiCell, UiTable, UiTableColumn, UiTablePage, UiTablePageSize, UiTableSort } from './table';
+import { UiCell, UiTable, UiTableColumn, UiTableExportEvent, UiTablePage, UiTablePageSize, UiTableSort } from './table';
 
 interface Row {
   name: string;
@@ -420,5 +420,157 @@ describe('UiTable — pagination et ordre des colonnes', () => {
     host.order.set(['label', 'inconnue']);
     fixture.detectChanges();
     expect(headers(el)).toEqual(['Libellé', 'N°']);
+  });
+
+  describe('export', () => {
+    interface Item {
+      id: number;
+      name: string;
+      price: number;
+    }
+    @Component({
+      imports: [UiTable],
+      template: `
+        <ui-table
+          caption="Produits"
+          [exportable]="exportable()"
+          [exportFormats]="formats"
+          [data]="items"
+          [columns]="columns"
+          [hiddenColumns]="hidden()"
+          [columnOrder]="['price']"
+          [search]="search()"
+          [sort]="{ key: 'price', direction: 'desc' }"
+          searchable
+          paginated
+          [pageSize]="2"
+          (exportRequest)="onExport($event)"
+        />
+      `,
+    })
+    class ExportHost {
+      exportable = signal(true);
+      formats: ('csv' | 'xlsx' | 'json')[] = ['csv', 'json'];
+      search = signal('');
+      hidden = signal<string[] | null>(null);
+      prevent = false;
+      events: UiTableExportEvent<Item>[] = [];
+      items: Item[] = [
+        { id: 1, name: 'Pomme', price: 2.5 },
+        { id: 2, name: 'Poire', price: 3 },
+        { id: 3, name: 'Prune', price: 1.2 },
+        { id: 4, name: 'Kiwi', price: 4 },
+      ];
+      columns: UiTableColumn<Item>[] = [
+        { key: 'id', header: 'Id' },
+        { key: 'name', header: 'Nom', exportValue: (i) => i.name.toUpperCase() },
+        { key: 'price', header: 'Prix', sortable: true },
+        { key: 'actions', header: 'Actions', exportable: false },
+      ];
+      onExport(event: UiTableExportEvent<Item>): void {
+        this.events.push(event);
+        if (this.prevent) event.preventDefault();
+      }
+    }
+
+    async function setup() {
+      const fixture = TestBed.createComponent(ExportHost);
+      document.body.appendChild(fixture.nativeElement);
+      const render = async () => {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+      };
+      await render();
+      const blobs: Blob[] = [];
+      const names: string[] = [];
+      (URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = (b: Blob) => {
+        blobs.push(b);
+        return 'blob:test';
+      };
+      (URL as unknown as { revokeObjectURL: () => void }).revokeObjectURL = () => undefined;
+      const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+        names.push(this.download);
+      });
+      const el: HTMLElement = fixture.nativeElement;
+      const button = () => el.querySelector('.ui-table__export-button') as HTMLButtonElement | null;
+      return { fixture, el, host: fixture.componentInstance, render, blobs, names, click, button };
+    }
+
+    afterEach(() => {
+      vi.restoreAllMocks();
+      document.querySelectorAll('body > div[ng-version], body > [id^="root"]').forEach((n) => n.remove());
+    });
+
+    it('bouton activable, menu des formats, choix des lignes avec la pagination', async () => {
+      const { el, host, render, button } = await setup();
+      expect(button()?.textContent).toContain('Exporter');
+      expect(button()?.getAttribute('aria-expanded')).toBe('false');
+      button()?.click();
+      await render();
+      const panel = el.querySelector('.ui-table__export-panel') as HTMLElement;
+      expect(panel.getAttribute('role')).toBe('group');
+      expect([...panel.querySelectorAll('.ui-table__export-format')].map((b) => b.textContent?.trim())).toEqual(['CSV', 'JSON']);
+      expect([...panel.querySelectorAll('label')].map((l) => l.textContent?.trim())).toEqual(['Toutes (4)', 'Page affichée (2)']);
+      // Échap ferme et rend le focus au bouton.
+      panel.querySelector('button')?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await render();
+      expect(el.querySelector('.ui-table__export-panel')).toBeNull();
+      expect(document.activeElement).toBe(button());
+      host.exportable.set(false);
+      await render();
+      expect(button()).toBeNull();
+    });
+
+    it('exporte ce qui est affiché : tri, recherche, colonnes visibles et ordre, exportValue, exportable:false', async () => {
+      const { el, host, render, blobs, names, button } = await setup();
+      button()?.click();
+      await render();
+      (el.querySelector('[data-format="csv"]') as HTMLButtonElement).click();
+      await render();
+      expect(names[0]).toMatch(/^Produits-\d{4}-\d{2}-\d{2}\.csv$/);
+      expect(blobs[0].type).toBe('text/csv;charset=utf-8');
+      const csv = await blobs[0].text();
+      expect(csv.replace('\uFEFF', '').split('\r\n')).toEqual(['Prix;Id;Nom', '4;4;KIWI', '3;2;POIRE', '2,5;1;POMME', '1,2;3;PRUNE', '']);
+      expect(el.querySelector('.ui-table__export-panel')).toBeNull();
+      expect(el.querySelector('[aria-live="polite"].ui-table__sr')?.textContent).toContain('Export CSV : 4 lignes, 3 colonnes.');
+      expect(host.events[0]).toMatchObject({ format: 'csv', scope: 'all', state: { search: '', page: 1, pageSize: 2 } });
+
+      // Page affichée seulement, puis colonne masquée et recherche.
+      button()?.click();
+      await render();
+      (el.querySelector('input[value="page"]') as HTMLInputElement).click();
+      await render();
+      (el.querySelector('[data-format="json"]') as HTMLButtonElement).click();
+      await render();
+      expect(JSON.parse(await blobs[1].text())).toEqual([
+        { price: 4, id: 4, name: 'KIWI' },
+        { price: 3, id: 2, name: 'POIRE' },
+      ]);
+      host.hidden.set(['id']);
+      host.search.set('pr');
+      await render();
+      button()?.click();
+      await render();
+      expect(el.querySelector('.ui-table__export-scope')).toBeNull(); // une seule page : pas de choix
+      (el.querySelector('[data-format="csv"]') as HTMLButtonElement).click();
+      await render();
+      expect((await blobs[2].text()).replace('\uFEFF', '')).toBe('Prix;Nom\r\n1,2;PRUNE\r\n');
+    });
+
+    it('preventDefault() annule le téléchargement ; bouton désactivé sans ligne', async () => {
+      const { el, host, render, blobs, button } = await setup();
+      host.prevent = true;
+      button()?.click();
+      await render();
+      (el.querySelector('[data-format="csv"]') as HTMLButtonElement).click();
+      await render();
+      expect(host.events).toHaveLength(1);
+      expect(host.events[0].rows.map((r) => r.id)).toEqual([4, 2, 1, 3]);
+      expect(blobs).toHaveLength(0);
+      host.search.set('introuvable');
+      await render();
+      expect(button()?.disabled).toBe(true);
+    });
   });
 });

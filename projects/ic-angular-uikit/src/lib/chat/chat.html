@@ -1,0 +1,146 @@
+<ng-content select="[uiChatHeader]" />
+
+<div class="ui-chat__body">
+  <!-- Fil en rôle log, sans annonce de chaque morceau du flux : la réponse complète passe par la zone d'annonce. -->
+  <div
+    #log
+    class="ui-chat__log"
+    role="log"
+    aria-live="off"
+    tabindex="0"
+    [attr.aria-label]="'Messages : ' + ariaLabel()"
+    (scroll)="onScroll()"
+  >
+    <div class="ui-chat__inner">
+      @if (!messages().length) {
+        <div class="ui-chat__welcome">
+          <span class="ui-chat__avatar ui-chat__avatar--assistant ui-chat__avatar--large" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9zM19 15l.9 2.1 2.1.9-2.1.9L19 21l-.9-2.1-2.1-.9 2.1-.9z" /></svg>
+          </span>
+          @if (welcome()) {
+            <ui-chat-content class="ui-chat__welcome-text" [markdown]="welcome() ?? ''" [headingOffset]="headingLevel()" />
+          }
+          @if (suggestions().length) {
+            <ul class="ui-chat__suggestions" aria-label="Suggestions">
+              @for (suggestion of suggestions(); track suggestion) {
+                <li>
+                  <button type="button" class="ui-chat__suggestion" [disabled]="disabled() || !transport()" (click)="send(suggestion)">{{ suggestion }}</button>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+
+      @for (message of messages(); track message.id; let last = $last) {
+        @let mine = message.role === 'user';
+        <article class="ui-chat__msg" [class.ui-chat__msg--user]="mine" [class.ui-chat__msg--assistant]="!mine" [attr.aria-labelledby]="baseId + '-h-' + message.id">
+          <span class="ui-chat__sr" role="heading" [attr.aria-level]="headingLevel()" [id]="baseId + '-h-' + message.id">
+            {{ mine ? userName() + ' :' : assistantName() + ' :' }}
+          </span>
+          <span class="ui-chat__avatar" [class.ui-chat__avatar--assistant]="!mine" aria-hidden="true">
+            @if (mine) {
+              {{ initial(userName()) }}
+            } @else {
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l1.9 5.6 5.6 1.9-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.9zM19 15l.9 2.1 2.1.9-2.1.9L19 21l-.9-2.1-2.1-.9 2.1-.9z" /></svg>
+            }
+          </span>
+          <div class="ui-chat__bubble">
+            @if (mine) {
+              <p class="ui-chat__text">{{ message.content }}</p>
+            } @else if (message.content) {
+              <ui-chat-content [markdown]="message.content" [headingOffset]="headingLevel() + 1" />
+            }
+            @if (message.status === 'streaming') {
+              <span class="ui-chat__typing" aria-hidden="true"><span></span><span></span><span></span></span>
+            }
+            @if (message.status === 'stopped') {
+              <p class="ui-chat__note">Réponse interrompue.</p>
+            }
+            @if (message.status === 'error') {
+              <p class="ui-chat__error" role="alert">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5h.01" /></svg>
+                {{ message.error }}
+              </p>
+            }
+
+            @if (!mine && message.status !== 'streaming') {
+              <div class="ui-chat__actions" role="group" [attr.aria-label]="'Actions sur la réponse'">
+                @if (message.content) {
+                  <button #copyButton type="button" class="ui-chat__action" aria-label="Copier la réponse" title="Copier" (click)="copy(message, copyButton)">
+                    <svg class="ui-chat__icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+                    <svg class="ui-chat__icon-done" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                  </button>
+                }
+                @if (message.id === lastAssistantId() && transport()) {
+                  <button type="button" class="ui-chat__action" [class.ui-chat__action--label]="message.status === 'error'" [attr.aria-label]="message.status === 'error' ? 'Réessayer' : 'Régénérer la réponse'" title="Régénérer" (click)="regenerate(message.id)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16" /><path d="M3 21v-5h5" /></svg>
+                    @if (message.status === 'error') {
+                      <span>Réessayer</span>
+                    }
+                  </button>
+                }
+                @if (showFeedback() && message.content && message.status === 'done') {
+                  <button type="button" class="ui-chat__action" aria-label="Bonne réponse" title="Bonne réponse" [attr.aria-pressed]="message.feedback === 'up'" (click)="setFeedback(message, 'up')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 10v11M3 11h4v10H3zM7 21h10.3a2 2 0 0 0 2-1.6l1.4-7A2 2 0 0 0 18.7 10H14V5.5A2.5 2.5 0 0 0 11.5 3L7 10" /></svg>
+                  </button>
+                  <button type="button" class="ui-chat__action" aria-label="Mauvaise réponse" title="Mauvaise réponse" [attr.aria-pressed]="message.feedback === 'down'" (click)="setFeedback(message, 'down')">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 14V3M21 13h-4V3h4zM17 3H6.7a2 2 0 0 0-2 1.6l-1.4 7A2 2 0 0 0 5.3 14H10v4.5a2.5 2.5 0 0 0 2.5 2.5L17 14" /></svg>
+                  </button>
+                }
+              </div>
+            }
+            @if (showTimestamps() && message.createdAt) {
+              <time class="ui-chat__time" [attr.datetime]="message.createdAt">{{ formatTime(message.createdAt) }}</time>
+            }
+          </div>
+        </article>
+      }
+    </div>
+  </div>
+
+  @if (!stick() && messages().length) {
+    <button type="button" class="ui-chat__to-end" (click)="scrollToEnd(true)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M6 13l6 6 6-6" /></svg>
+      Aller aux derniers messages
+    </button>
+  }
+</div>
+
+<form class="ui-chat__composer" (submit)="onSubmit($event)">
+  <ng-content select="[uiChatComposerExtra]" />
+  <div class="ui-chat__field" [class.ui-chat__field--disabled]="disabled()">
+    <label class="ui-chat__sr" [for]="baseId + '-input'">Votre message</label>
+    <textarea
+      #input
+      class="ui-chat__input"
+      rows="1"
+      [id]="baseId + '-input'"
+      [value]="draft()"
+      [placeholder]="placeholder()"
+      [disabled]="disabled()"
+      [attr.maxlength]="maxLength()"
+      [attr.aria-describedby]="baseId + '-hint'"
+      (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+    ></textarea>
+    @if (busy()) {
+      <button type="submit" class="ui-chat__send ui-chat__send--stop" aria-label="Arrêter la réponse" aria-keyshortcuts="Escape" title="Arrêter (Échap)">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6.5" y="6.5" width="11" height="11" rx="2" /></svg>
+      </button>
+    } @else {
+      <button type="submit" class="ui-chat__send" aria-label="Envoyer" title="Envoyer (Entrée)" [disabled]="!canSend()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" /></svg>
+      </button>
+    }
+  </div>
+  <p class="ui-chat__hint" [id]="baseId + '-hint'">
+    <span>{{ disclaimer() }}</span>
+    <span class="ui-chat__sr"> Entrée pour envoyer, Maj+Entrée pour aller à la ligne.</span>
+    @if (counter(); as count) {
+      <span class="ui-chat__counter">{{ count }}</span>
+    }
+  </p>
+</form>
+
+<p class="ui-chat__sr" aria-live="polite" aria-atomic="true">{{ announcement() }}</p>

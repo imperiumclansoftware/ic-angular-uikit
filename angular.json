@@ -64,6 +64,10 @@
               "node_modules/@fortawesome/fontawesome-free/css/all.min.css",
               "node_modules/material-symbols/outlined.css",
               "node_modules/bootstrap-icons/font/bootstrap-icons.min.css",
+              "node_modules/@fontsource-variable/inter/index.css",
+              "node_modules/@fontsource-variable/cinzel/index.css",
+              "node_modules/@fontsource/unifrakturcook/700.css",
+              "node_modules/@fontsource/jetbrains-mono/400.css",
               "projects/docs/src/styles.css"
             ]
           },
@@ -77,7 +81,7 @@
                 },
                 {
                   "type": "anyComponentStyle",
-                  "maximumWarning": "10kB",
+                  "maximumWarning": "12kB",
                   "maximumError": "14kB"
                 }
               ],

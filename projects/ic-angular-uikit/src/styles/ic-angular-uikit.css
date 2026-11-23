@@ -5,12 +5,14 @@
 @import './tokens.css';
 @import './themes/light.css';
 @import './themes/dark.css';
+@import './themes/imperium-dark.css';
 @import './seasons.css';
 
-/* Un sous-arbre thémé reprend le fond et la couleur de texte de son thème. */
+/* Un sous-arbre thémé reprend le fond, la couleur de texte et la police de son thème. */
 [data-ui-theme] {
   background-color: var(--ui-color-bg);
   color: var(--ui-color-text);
+  font-family: var(--ui-font-family);
 }
 
 body {

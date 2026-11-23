@@ -1,0 +1,82 @@
+:host {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  min-width: 0;
+  max-width: 22rem;
+  padding: var(--ui-space-1);
+  padding-inline-end: var(--ui-space-2);
+  border-radius: var(--ui-radius-md);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family);
+}
+:host(.ui-mini-player--hidden) { display: none; }
+
+.ui-mini__thumb {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: var(--ui-mini-player-thumb, 2.5rem);
+  height: var(--ui-mini-player-thumb, 2.5rem);
+  overflow: hidden;
+  border-radius: var(--ui-radius-sm);
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+.ui-mini__viz { position: absolute; inset: 3px; }
+.ui-mini__frame, .ui-mini__art { display: block; width: 100%; height: 100%; object-fit: cover; }
+.ui-mini__badge { font-size: var(--ui-font-size-xs); font-weight: var(--ui-font-weight-bold); }
+
+.ui-mini__info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 2px var(--ui-space-1);
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.ui-mini__info:disabled { cursor: default; }
+.ui-mini__info:hover:not(:disabled) .ui-mini__title { text-decoration: underline; }
+.ui-mini__title, .ui-mini__artist { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ui-mini__title { font-size: var(--ui-font-size-sm); font-weight: var(--ui-font-weight-bold); }
+.ui-mini__artist { color: var(--ui-color-text-muted); font-size: var(--ui-font-size-xs); }
+
+.ui-mini__buttons { display: flex; flex: none; align-items: center; }
+.ui-mini__btn {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ui-radius-full);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.ui-mini__btn svg { width: 1.1rem; height: 1.1rem; }
+.ui-mini__btn:hover:not(:disabled) { background: var(--ui-color-hover); }
+.ui-mini__btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ui-mini__btn:focus-visible, .ui-mini__info:focus-visible { outline: 2px solid var(--ui-color-focus-ring); outline-offset: 1px; }
+
+.ui-mini__progress {
+  position: absolute;
+  inset-inline: var(--ui-space-1);
+  bottom: 0;
+  width: auto;
+  height: 3px;
+  border: 0;
+  border-radius: 3px;
+  background: color-mix(in srgb, currentColor 18%, transparent);
+  appearance: none;
+}
+.ui-mini__progress::-webkit-progress-bar { border-radius: 3px; background: color-mix(in srgb, currentColor 18%, transparent); }
+.ui-mini__progress::-webkit-progress-value { border-radius: 3px; background: currentColor; }
+.ui-mini__progress::-moz-progress-bar { border-radius: 3px; background: currentColor; }

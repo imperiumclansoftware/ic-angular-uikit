@@ -1,0 +1,46 @@
+/* Typographie du contenu riche, commune à l'éditeur et à ui-rich-text (encapsulation désactivée : préfixe .ui-prose). */
+.ui-prose {
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family);
+  font-size: var(--ui-font-size-md);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.ui-prose > :first-child { margin-top: 0; }
+.ui-prose > :last-child { margin-bottom: 0; }
+.ui-prose p { margin: 0 0 0.75em; }
+.ui-prose h2, .ui-prose h3, .ui-prose h4 { margin: 1.2em 0 0.5em; line-height: 1.25; font-weight: var(--ui-font-weight-bold); }
+.ui-prose h2 { font-size: 1.5em; }
+.ui-prose h3 { font-size: 1.25em; }
+.ui-prose h4 { font-size: 1.075em; }
+.ui-prose ul, .ui-prose ol { margin: 0 0 0.75em; padding-inline-start: 1.5em; }
+.ui-prose li + li { margin-top: 0.25em; }
+.ui-prose li > ul, .ui-prose li > ol { margin: 0.25em 0 0; }
+.ui-prose blockquote {
+  margin: 0 0 0.75em;
+  padding: 0.25em 0 0.25em 1em;
+  border-inline-start: 3px solid var(--ui-color-border-strong);
+  color: var(--ui-color-text-muted);
+}
+.ui-prose pre {
+  margin: 0 0 0.75em;
+  padding: 0.75em 1em;
+  overflow-x: auto;
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface-sunken);
+  font-family: var(--ui-font-family-mono);
+  font-size: 0.875em;
+  white-space: pre;
+}
+.ui-prose code {
+  padding: 0.1em 0.3em;
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-surface-sunken);
+  font-family: var(--ui-font-family-mono);
+  font-size: 0.9em;
+}
+.ui-prose pre code { padding: 0; background: none; font-size: inherit; }
+/* Liens soulignés : jamais signalés par la seule couleur. */
+.ui-prose a { color: var(--ui-color-primary-text); text-decoration: underline; text-underline-offset: 0.15em; }
+.ui-prose hr { margin: 1.25em 0; border: 0; border-top: 1px solid var(--ui-color-border-strong); }
+.ui-prose s { text-decoration-thickness: 1px; }

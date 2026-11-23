@@ -1,0 +1,63 @@
+{
+  "intro": "`ui-rich-text-editor` produit du HTML nettoyé par une liste blanche, mais **ce nettoyage côté navigateur n'est qu'un confort** : une requête peut être forgée sans passer par l'éditeur. Le serveur doit donc **nettoyer à nouveau** tout HTML reçu, avec la même liste blanche, **avant de l'enregistrer**, puis ne réafficher que ce HTML nettoyé (avec `ui-rich-text`, jamais `[innerHTML]`).\n\nListe blanche commune : `p`, `h2`–`h4`, `blockquote`, `pre`, `ul`, `ol`, `li`, `hr`, `br`, `strong`, `em`, `u`, `s`, `code`, `a[href]` (http, https, mailto, tel ou relatif). Les éléments inconnus sont retirés en gardant leur texte ; `script`, `style`, `iframe`, `svg`, `img`… sont retirés avec leur contenu ; tous les autres attributs (`style`, `onclick`, `class`…) disparaissent ; les liens reçoivent `rel=\"noopener noreferrer nofollow ugc\"`.\n\nContrat des exemples : `POST /api/comments` `{ content }` → `201 { id, content }` (HTML nettoyé), `GET /api/comments` → commentaires de l'utilisateur connecté. Règles appliquées : authentification ; CSRF « double submit » (cookie `XSRF-TOKEN` = en-tête `X-XSRF-TOKEN`) ; propriétaire = utilisateur de la session ; corps JSON de 64 Ko au plus ; texte visible de 5 000 caractères au plus et non vide **après** nettoyage ; `Cache-Control: no-store`.\n\nCodes d'erreur : `400` (JSON mal formé), `401` (non connecté), `403` (jeton CSRF), `413` (trop volumineux), `415` (pas du JSON), `422` (vide ou trop long).",
+  "backends": [
+    {
+      "id": "angular",
+      "title": "Angular (client)",
+      "notes": "Saisie avec `ui-rich-text-editor` (validation `required` + `richTextMaxLength`), affichage du HTML **renvoyé par le serveur** avec `ui-rich-text`. Le jeton CSRF est ajouté par `HttpClient`.",
+      "files": [
+        {
+          "file": "angular.ts",
+          "name": "app.config.ts + comments.ts",
+          "language": "ts"
+        }
+      ]
+    },
+    {
+      "id": "symfony",
+      "title": "Symfony",
+      "install": "composer require symfony/html-sanitizer symfony/orm-pack symfony/validator symfony/serializer symfony/uid symfony/security-bundle",
+      "notes": "Composant officiel **HtmlSanitizer** configuré avec la liste blanche de l'éditeur (`default_action: drop`, et `block_elements` pour garder le texte des conteneurs comme `div` ou `span`), injecté par `#[Target]`. DTO validé par `#[MapRequestPayload]`, `Uuid::v7()`, `#[IsGranted]`, filtre propriétaire. Le CSRF est assuré par le `CsrfDoubleSubmitSubscriber` du secure-skeleton ; la taille du corps est contrôlée avant la lecture du JSON. Générez la migration avec `bin/console make:migration`.",
+      "files": [
+        {
+          "file": "symfony-html_sanitizer.yaml",
+          "name": "config/packages/html_sanitizer.yaml",
+          "language": "sh"
+        },
+        {
+          "file": "symfony-Comment.php",
+          "name": "src/Entity/Comment.php",
+          "language": "php"
+        },
+        {
+          "file": "symfony-CommentInput.php",
+          "name": "src/Dto/CommentInput.php",
+          "language": "php"
+        },
+        {
+          "file": "symfony-CommentController.php",
+          "name": "src/Controller/CommentController.php",
+          "language": "php"
+        },
+        {
+          "file": "symfony-JsonBodyLimitSubscriber.php",
+          "name": "src/EventSubscriber/JsonBodyLimitSubscriber.php",
+          "language": "php"
+        }
+      ]
+    },
+    {
+      "id": "node",
+      "title": "Node.js",
+      "install": "npm install express@5 sanitize-html@2",
+      "notes": "Express 5, **sanitize-html** avec la liste blanche de l'éditeur (alias `b` → `strong`… comme l'éditeur), SQLite intégré à Node (`node:sqlite`, requêtes préparées). Corps limité à 64 Ko pendant la lecture.",
+      "files": [
+        {
+          "file": "node-express.mjs",
+          "name": "server.mjs",
+          "language": "ts"
+        }
+      ]
+    }
+  ]
+}

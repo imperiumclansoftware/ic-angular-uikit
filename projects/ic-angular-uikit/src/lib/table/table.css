@@ -113,8 +113,8 @@ tbody .ui-table__row:last-child .ui-table__td { border-bottom: 0; }
 .ui-table__tool:focus-visible { outline: 2px solid var(--ui-color-focus-ring); outline-offset: 2px; }
 .ui-table__tool--inline { margin-left: var(--ui-space-2); }
 .ui-table__badge { padding: 0 var(--ui-space-2); border-radius: var(--ui-radius-full); background: var(--ui-color-primary-subtle); color: var(--ui-color-primary-text); font-weight: var(--ui-font-weight-bold); }
-.ui-table__columns { position: relative; }
-.ui-table__columns-panel {
+.ui-table__columns, .ui-table__export { position: relative; }
+.ui-table__columns-panel, .ui-table__export-panel {
   position: absolute;
   top: calc(100% + var(--ui-space-1));
   right: 0;
@@ -131,6 +131,15 @@ tbody .ui-table__row:last-child .ui-table__td { border-bottom: 0; }
   box-shadow: var(--ui-shadow-lg);
 }
 .ui-table__columns-panel ui-checkbox { white-space: nowrap; }
+.ui-table__tool:disabled { opacity: 0.55; cursor: not-allowed; background: var(--ui-color-surface); }
+.ui-table__export-panel { gap: 2px; max-height: none; padding: var(--ui-space-1); }
+.ui-table__export-scope { display: flex; flex-direction: column; margin: 0 0 var(--ui-space-1); padding: 0 var(--ui-space-2) var(--ui-space-1); border: 0; border-bottom: 1px solid var(--ui-color-border); font-size: var(--ui-font-size-sm); }
+.ui-table__export-scope legend { padding: var(--ui-space-1) 0 0; color: var(--ui-color-text-muted); font-size: var(--ui-font-size-xs); font-weight: var(--ui-font-weight-bold); }
+.ui-table__export-scope label { display: flex; align-items: center; gap: var(--ui-space-2); min-height: 2rem; white-space: nowrap; }
+.ui-table__export-scope input { margin: 0; accent-color: var(--ui-color-primary); }
+.ui-table__export-format { min-height: 2.25rem; padding: 0 var(--ui-space-3); border: 0; border-radius: var(--ui-radius-sm); background: none; color: inherit; font: inherit; font-size: var(--ui-font-size-sm); text-align: start; white-space: nowrap; cursor: pointer; }
+.ui-table__export-format:hover { background: var(--ui-color-hover); }
+.ui-table__export-format:focus-visible, .ui-table__export-scope input:focus-visible { outline: 2px solid var(--ui-color-focus-ring); outline-offset: -2px; }
 
 /* ---------- Ligne de filtres ---------- */
 .ui-table__filters .ui-table__filter {

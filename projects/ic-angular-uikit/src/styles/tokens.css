@@ -38,6 +38,21 @@
   --ui-easing: cubic-bezier(0.2, 0, 0, 1);
 
   --ui-z-dialog: 1000;
+
+  /* Branches d'Imperium Clan : couleur principale (éléments graphiques), variante texte (≥ 4,5:1 sur fond sombre)
+     et couleur du texte posé sur la couleur pleine. */
+  --ui-branch-joueurs: #dc2626;
+  --ui-branch-joueurs-text: #f87171;
+  --ui-branch-joueurs-on: #ffffff;
+  --ui-branch-developpeurs: #10b981;
+  --ui-branch-developpeurs-text: #34d399;
+  --ui-branch-developpeurs-on: #0c0e14;
+  --ui-branch-communicants: #f59e0b;
+  --ui-branch-communicants-text: #fbbf24;
+  --ui-branch-communicants-on: #0c0e14;
+  --ui-branch-cine: #a855f7;
+  --ui-branch-cine-text: #c084fc;
+  --ui-branch-cine-on: #0c0e14;
 }
 
 @media (prefers-reduced-motion: reduce) {

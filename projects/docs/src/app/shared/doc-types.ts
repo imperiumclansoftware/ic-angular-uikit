@@ -51,6 +51,16 @@ export interface ApiGroup {
   types: ApiType[];
 }
 
+/** Entrée du menu (index généré, sans le détail de l'API). */
+export interface NavGroup {
+  slug: string;
+  title: string;
+  category: string;
+  description: string;
+  /** Noms et sélecteurs des entrées, pour la recherche. */
+  selectors: string;
+}
+
 export interface ExampleDef {
   id: string;
   title: string;
@@ -58,6 +68,8 @@ export interface ExampleDef {
   file: string;
   component: Type<unknown>;
   source: string;
+  /** Fichiers locaux importés par l'exemple (données, composants annexes). */
+  files: readonly { name: string; source: string }[];
 }
 
 export interface BackendFile {

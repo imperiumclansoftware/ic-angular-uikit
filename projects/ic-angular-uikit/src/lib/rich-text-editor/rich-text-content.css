@@ -1,0 +1,25 @@
+/* Zone éditable (encapsulation désactivée : classes préfixées ui-rte). */
+.ui-rte__content {
+  position: relative;
+  box-sizing: border-box;
+  min-height: var(--ui-rte-min-height, 8rem);
+  max-height: var(--ui-rte-max-height, 32rem);
+  overflow-y: auto;
+  padding: var(--ui-space-3) var(--ui-space-4);
+  outline: none;
+  cursor: text;
+  white-space: pre-wrap;
+  overscroll-behavior: contain;
+}
+.ui-rte__content[contenteditable='false'] { cursor: default; }
+/* Texte indicatif : couleur de texte secondaire (contraste ≥ 4,5:1), non lu comme contenu. */
+.ui-rte__content--empty::before {
+  content: attr(data-placeholder);
+  position: absolute;
+  inset-inline: var(--ui-space-4);
+  top: var(--ui-space-3);
+  color: var(--ui-color-text-subtle);
+  pointer-events: none;
+}
+.ui-rte__content pre { white-space: pre-wrap; }
+.ui-rte__content ::selection { background: color-mix(in srgb, var(--ui-color-primary) 28%, transparent); }

@@ -1,0 +1,37 @@
+# config/packages/html_sanitizer.yaml — même liste blanche que ui-rich-text-editor.
+framework:
+    html_sanitizer:
+        sanitizers:
+            app.rich_text_sanitizer:
+                # Tout élément non listé est retiré avec son contenu (script, style, iframe, svg, img…).
+                # NB : ne pas compter sur drop_elements pour style / title / meta / link, ignorés dans le corps.
+                default_action: drop
+                # Conteneurs de texte (collage depuis le web ou un traitement de texte) : balise retirée, texte gardé.
+                block_elements: [div, span, section, article, header, footer, main, aside, nav, figure, figcaption, address, center, font, small, big, sub, sup, mark, abbr, cite, q, time, kbd, var, samp, label, table, thead, tbody, tfoot, tr, td, th, caption, dl, dt, dd, details, summary]
+                allow_elements:
+                    p: []
+                    h2: []
+                    h3: []
+                    h4: []
+                    blockquote: []
+                    pre: []
+                    ul: []
+                    ol: []
+                    li: []
+                    hr: []
+                    br: []
+                    strong: []
+                    b: []
+                    em: []
+                    i: []
+                    u: []
+                    s: []
+                    code: []
+                    a: [href]
+                # Liens : http, https, mailto, tel ou relatifs ; javascript:, data:… retirés.
+                allowed_link_schemes: [http, https, mailto, tel]
+                allow_relative_links: true
+                force_attributes:
+                    a:
+                        rel: noopener noreferrer nofollow ugc
+                max_input_length: 65536

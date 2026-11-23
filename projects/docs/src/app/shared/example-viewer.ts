@@ -1,5 +1,6 @@
 import { NgComponentOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
+import { UiTab, UiTabs } from 'ic-angular-uikit';
 import { CodeBlock } from './code-block';
 import { ExampleDef } from './doc-types';
 import { Markdown } from './markdown';
@@ -8,7 +9,7 @@ type PreviewTheme = 'inherit' | 'light' | 'dark' | 'split';
 
 @Component({
   selector: 'doc-example',
-  imports: [NgComponentOutlet, CodeBlock, Markdown],
+  imports: [NgComponentOutlet, CodeBlock, Markdown, UiTabs, UiTab],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section class="example" [attr.aria-labelledby]="example().id">
@@ -57,7 +58,21 @@ type PreviewTheme = 'inherit' | 'light' | 'dark' | 'split';
         }
 
         @if (showCode()) {
-          <doc-code class="example__code" [code]="example().source" [filename]="fileName()" />
+          @if (example().files.length) {
+            <!-- Exemple + fichiers qu'il importe (données, composants annexes), un onglet par fichier. -->
+            <ui-tabs class="example__files" [ariaLabel]="'Fichiers de l’exemple « ' + example().title + ' »'">
+              <ui-tab [label]="fileName()">
+                <doc-code class="example__code" maxHeight="32rem" [code]="example().source" [filename]="fileName()" />
+              </ui-tab>
+              @for (file of example().files; track file.name) {
+                <ui-tab [label]="file.name">
+                  <doc-code class="example__code" maxHeight="32rem" [code]="file.source" [filename]="file.name" />
+                </ui-tab>
+              }
+            </ui-tabs>
+          } @else {
+            <doc-code class="example__code" [code]="example().source" [filename]="fileName()" />
+          }
         }
       </div>
     </section>

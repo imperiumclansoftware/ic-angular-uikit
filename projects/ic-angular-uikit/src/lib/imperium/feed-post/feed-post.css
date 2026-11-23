@@ -1,0 +1,45 @@
+:host {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-4) var(--ui-space-5);
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-color-surface);
+}
+:host(.ui-feed-post--announcement) {
+  padding-top: var(--ui-space-5);
+  border-color: color-mix(in srgb, var(--ui-ornament-color, var(--ui-color-primary)) 55%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ui-ornament-color, var(--ui-color-primary)) 8%, transparent), transparent 40%), var(--ui-color-surface);
+}
+/* Le fleuron interrompt le filet supérieur : seule sa moitié haute masque la bordure. */
+.ui-feed-post__flourish { position: absolute; top: -0.75rem; left: 50%; width: 7rem; padding: 0 0.5rem; translate: -50% 0; background: linear-gradient(var(--ui-color-bg) 50%, transparent 50%); }
+.ui-feed-post__header { display: flex; align-items: center; gap: var(--ui-space-3); }
+.ui-feed-post__by { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.ui-feed-post__author { color: var(--ui-color-text); font-weight: 650; }
+.ui-feed-post__sub { color: var(--ui-color-text-muted); font-size: var(--ui-font-size-xs); }
+.ui-feed-post__tag {
+  padding: 0.15rem 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--ui-ornament-color, var(--ui-color-primary)) 60%, transparent);
+  border-radius: var(--ui-radius-sm);
+  color: var(--ui-color-primary-text);
+  font-family: var(--ui-font-family-display, inherit);
+  font-size: var(--ui-font-size-xs);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ui-feed-post__title {
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-display, inherit);
+  font-size: var(--ui-font-size-lg);
+  font-weight: 700;
+  letter-spacing: var(--ui-display-letter-spacing, 0.02em);
+  text-transform: var(--ui-display-transform, none);
+}
+.ui-feed-post__content { color: var(--ui-color-text); line-height: 1.6; }
+.ui-feed-post__content:empty { display: none; }
+.ui-feed-post__branches { display: flex; flex-wrap: wrap; gap: var(--ui-space-1); margin: 0; padding: 0; list-style: none; }
+.ui-feed-post__actions { display: flex; flex-wrap: wrap; gap: var(--ui-space-2); padding-top: var(--ui-space-2); border-top: 1px solid var(--ui-color-border); }
+.ui-feed-post__actions:empty { display: none; }

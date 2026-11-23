@@ -1,13 +1,11 @@
-import { API } from '../generated/api';
-import { ApiGroup } from './doc-types';
+import { NAV_INDEX } from '../generated/nav-index';
+import { NavGroup } from './doc-types';
 
 /** Dossiers de la librairie documentés dans les guides plutôt que comme composants. */
 const GUIDE_SLUGS = new Set(['core', 'validation']);
 
-/** Pages de composants. */
-export const COMPONENT_GROUPS = API.filter((group) => !GUIDE_SLUGS.has(group.slug));
-export const CORE_GROUP = API.find((group) => group.slug === 'core');
-export const VALIDATION_GROUP = API.find((group) => group.slug === 'validation');
+/** Pages de composants (index léger : l'API complète est dans api-groups.ts, chargé avec les pages). */
+export const COMPONENT_NAV = NAV_INDEX.filter((group) => !GUIDE_SLUGS.has(group.slug));
 
 /** Ordre d'affichage des catégories (les catégories inconnues suivent, par ordre alphabétique). */
 const CATEGORY_ORDER = ['Mise en page', 'Actions', 'Formulaires', 'Navigation', 'Affichage', 'Retours & superpositions'];
@@ -25,19 +23,18 @@ export interface NavSection {
   items: NavItem[];
 }
 
-function componentItem(group: ApiGroup): NavItem {
-  const selectors = group.entries.map((e) => `${e.name} ${e.selector ?? ''}`).join(' ');
+function componentItem(group: NavGroup): NavItem {
   return {
     title: group.title,
     link: ['/components', group.slug],
-    keywords: `${group.title} ${group.category} ${selectors} ${group.description}`,
+    keywords: `${group.title} ${group.category} ${group.selectors} ${group.description}`,
   };
 }
 
 /** Composants regroupés par catégorie, triés. */
 export const COMPONENT_SECTIONS: NavSection[] = (() => {
-  const byCategory = new Map<string, ApiGroup[]>();
-  for (const group of COMPONENT_GROUPS) {
+  const byCategory = new Map<string, NavGroup[]>();
+  for (const group of COMPONENT_NAV) {
     const list = byCategory.get(group.category) ?? [];
     list.push(group);
     byCategory.set(group.category, list);
@@ -50,7 +47,7 @@ export const COMPONENT_SECTIONS: NavSection[] = (() => {
     .sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b))
     .map(([title, groups]) => ({
       title,
-      items: groups.sort((a, b) => a.title.localeCompare(b.title)).map(componentItem),
+      items: [...groups].sort((a, b) => a.title.localeCompare(b.title)).map(componentItem),
     }));
 })();
 

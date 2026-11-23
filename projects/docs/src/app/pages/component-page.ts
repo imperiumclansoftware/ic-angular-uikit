@@ -8,7 +8,7 @@ import { ApiView } from '../shared/api-view';
 import { CodeBlock } from '../shared/code-block';
 import { ExampleViewer } from '../shared/example-viewer';
 import { Markdown } from '../shared/markdown';
-import { COMPONENT_GROUPS } from '../shared/nav';
+import { COMPONENT_GROUPS } from '../shared/api-groups';
 
 @Component({
   selector: 'doc-component-page',

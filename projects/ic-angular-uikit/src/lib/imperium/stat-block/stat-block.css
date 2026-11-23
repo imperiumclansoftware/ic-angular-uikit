@@ -1,0 +1,33 @@
+:host {
+  --_c: var(--ui-ornament-color, var(--ui-color-primary));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-4) var(--ui-space-5);
+  overflow: hidden;
+  border: 1px solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-color-surface);
+}
+/* Filet d'accent en haut, sur toute la largeur. */
+:host::before { content: ''; position: absolute; top: 0; right: 0; left: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--_c), transparent); }
+.ui-stat-block__head { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-2); }
+.ui-stat-block__label { color: var(--ui-color-text-muted); font-size: var(--ui-font-size-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; }
+.ui-stat-block__icon { color: var(--_c); font-size: 1.25rem; }
+.ui-stat-block__value {
+  margin: 0;
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-display, inherit);
+  font-size: 2.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1.15;
+}
+.ui-stat-block__unit { color: var(--ui-color-text-muted); font-size: 0.45em; font-weight: 600; }
+.ui-stat-block__trend { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--ui-space-2); margin: 0; font-size: var(--ui-font-size-sm); font-weight: 650; }
+.ui-stat-block__trend--good { color: var(--ui-color-success-text); }
+.ui-stat-block__trend--bad { color: var(--ui-color-danger-text); }
+.ui-stat-block__trend--flat { color: var(--ui-color-text-muted); }
+.ui-stat-block__period { color: var(--ui-color-text-muted); font-weight: 400; }
+.ui-stat-block__sr { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }

@@ -115,6 +115,47 @@
         }
       </div>
     }
+    @if (canExport()) {
+      <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+      <div class="ui-table__export" (keydown)="onExportKeydown($event)">
+        <button
+          type="button"
+          class="ui-table__tool ui-table__export-button"
+          [disabled]="!rows().length"
+          [attr.aria-expanded]="exportMenuOpen()"
+          [attr.aria-controls]="baseId + '-export'"
+          [title]="rows().length ? 'Exporter les données affichées' : 'Aucune ligne à exporter'"
+          (click)="exportMenuOpen.set(!exportMenuOpen())"
+        >
+          <svg class="ui-table__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+          </svg>
+          Exporter
+        </button>
+        @if (exportMenuOpen()) {
+          <div class="ui-table__export-panel" role="group" [id]="baseId + '-export'" aria-label="Exporter les données affichées">
+            @if (exportScopeChoice()) {
+              <fieldset class="ui-table__export-scope">
+                <legend>Lignes</legend>
+                <label>
+                  <input type="radio" [name]="baseId + '-scope'" value="all" [checked]="exportScope() === 'all'" (change)="exportScope.set('all')" />
+                  Toutes ({{ rows().length }})
+                </label>
+                <label>
+                  <input type="radio" [name]="baseId + '-scope'" value="page" [checked]="exportScope() === 'page'" (change)="exportScope.set('page')" />
+                  Page affichée ({{ pagedRows().length }})
+                </label>
+              </fieldset>
+            }
+            @for (format of exportFormats(); track format) {
+              <button type="button" class="ui-table__export-format" [attr.data-format]="format" (click)="onExportClick(format)">
+                {{ exportLabels[format] }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
   </div>
 }
 

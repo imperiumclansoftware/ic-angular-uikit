@@ -38,7 +38,18 @@ import {
   effect,
   untracked,
 } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { uniqueId } from '../core/id';
+import {
+  UiTableExportData,
+  UiTableExportFormat,
+  UiTableExportOptions,
+  UiTableExportScope,
+  downloadFile,
+  tableExportContent,
+  tableExportFilename,
+  tableExportMime,
+} from './table-export';
 
 /** Définition d'une colonne de `ui-table`. */
 export interface UiTableColumn<T = unknown> {
@@ -64,7 +75,36 @@ export interface UiTableColumn<T = unknown> {
   hideable?: boolean;
   /** Masquée au départ (tant que `hiddenColumns` n'est pas fourni). */
   hidden?: boolean;
+  /** Incluse dans l'export (défaut : `true` ; mettez `false` pour une colonne d'actions). */
+  exportable?: boolean;
+  /** Valeur exportée (défaut : `value`, ou la propriété `key`) — utile quand la cellule est un template. */
+  exportValue?: (row: T) => unknown;
 }
+
+/** Payload de l'événement `exportRequest` (appelez `preventDefault()` pour faire l'export vous-même, côté serveur par exemple). */
+export interface UiTableExportEvent<T = unknown> {
+  /** Format demandé. */
+  format: UiTableExportFormat;
+  /** Lignes demandées : toutes les lignes filtrées et triées, ou la page affichée. */
+  scope: UiTableExportScope;
+  /** Nom de fichier proposé. */
+  filename: string;
+  /** Colonnes exportées (visibles, dans l'ordre affiché, hors `exportable: false`). */
+  columns: readonly UiTableColumn<T>[];
+  /** Lignes exportées, dans l'ordre affiché. */
+  rows: readonly T[];
+  /** État actuel de la table, pour reproduire l'export côté serveur. */
+  state: { search: string; filters: UiTableFilters; sort: UiTableSort | null; page: number; pageSize: number };
+  /** Annule le téléchargement local. */
+  preventDefault(): void;
+}
+
+/** Libellés des formats dans le menu « Exporter ». */
+export const UI_TABLE_EXPORT_LABELS: Record<UiTableExportFormat, string> = {
+  csv: 'CSV',
+  xlsx: 'Excel (.xlsx)',
+  json: 'JSON',
+};
 
 export type UiSortDirection = 'asc' | 'desc';
 
@@ -243,10 +283,24 @@ export class UiTable<T> {
   /** Nombre total de lignes côté serveur (avec `manualPagination`). */
   readonly totalItems = input<number | null>(null);
 
+  /**
+   * Affiche le bouton « Exporter » : télécharge les données affichées (recherche, filtres, tri, colonnes visibles et
+   * leur ordre) ; avec la pagination, choix entre toutes les lignes et la page affichée.
+   */
+  readonly exportable = input(false, { transform: booleanAttribute });
+  /** Formats proposés, dans l'ordre du menu. */
+  readonly exportFormats = input<readonly UiTableExportFormat[]>(['csv', 'xlsx', 'json']);
+  /** Début du nom de fichier (la date du jour et l'extension sont ajoutées) ; défaut : `caption`, sinon « export ». */
+  readonly exportFilename = input<string>();
+  /** Réglages de l'export (séparateur CSV, séparateur décimal, nom de feuille Excel…). */
+  readonly exportOptions = input<UiTableExportOptions>({});
+
   /** Émis au clic (ou Entrée) sur une ligne, si `clickableRows`. */
   readonly rowClick = output<UiTableRowEvent<T>>();
   /** Émis quand la page ou la taille de page effective change (y compris le premier calcul en mode `'auto'`). */
   readonly paginationChange = output<UiTablePage>();
+  /** Émis avant chaque export ; `preventDefault()` annule le téléchargement local (export côté serveur). */
+  readonly exportRequest = output<UiTableExportEvent<T>>();
 
   private readonly cellDefs = contentChildren(UiCell);
   private readonly headerDefs = contentChildren(UiHeader);
@@ -259,6 +313,11 @@ export class UiTable<T> {
 
   protected readonly baseId = uniqueId('ui-table');
   protected readonly columnsMenuOpen = signal(false);
+  protected readonly exportMenuOpen = signal(false);
+  /** Lignes choisies dans le menu « Exporter ». */
+  protected readonly exportScope = signal<UiTableExportScope>('all');
+  protected readonly exportLabels = UI_TABLE_EXPORT_LABELS;
+  private readonly document = inject(DOCUMENT);
   private readonly host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
 
   /** Colonnes masquées (choix de l'utilisateur, sinon colonnes marquées `hidden`). */
@@ -282,7 +341,10 @@ export class UiTable<T> {
   protected readonly visibleColumns = computed(() => this.orderedColumns().filter((c) => !this.hiddenKeys().has(c.key)));
   protected readonly hasFilters = computed(() => this.filterable() && this.visibleColumns().some((c) => c.filter));
   protected readonly hasColumnsMenu = computed(() => this.columnToggle() || this.reorderable());
-  protected readonly hasToolbar = computed(() => this.searchable() || this.hasColumnsMenu());
+  protected readonly hasToolbar = computed(() => this.searchable() || this.hasColumnsMenu() || this.canExport());
+  protected readonly canExport = computed(() => this.exportable() && this.exportFormats().length > 0);
+  /** Choix « toutes les lignes / page affichée » proposé (pagination locale de plus d'une page). */
+  protected readonly exportScopeChoice = computed(() => this.paginated() && !this.manualPagination() && this.pageCount() > 1);
   /** Ordre modifié par rapport à `columns`. */
   protected readonly isReordered = computed(() => this.orderedColumns().some((c, i) => c !== this.columns()[i]));
   /** Colonne en cours de glisser-déposer. */
@@ -566,6 +628,66 @@ export class UiTable<T> {
     if (size !== this.autoSize()) this.autoSize.set(size);
   }
 
+  /** Colonnes exportées : visibles, dans l'ordre affiché, hors `exportable: false`. */
+  exportColumns(): UiTableColumn<T>[] {
+    return this.visibleColumns().filter((c) => c.exportable !== false);
+  }
+
+  /** Lignes exportées, dans l'ordre affiché : toutes les lignes filtrées et triées, ou la page affichée. */
+  exportRows(scope: UiTableExportScope = 'all'): readonly T[] {
+    return scope === 'page' ? this.pagedRows() : this.rows();
+  }
+
+  /** Données exportées (en-têtes, clés et valeurs), sans téléchargement. */
+  exportTable(scope: UiTableExportScope = 'all'): UiTableExportData {
+    const columns = this.exportColumns();
+    return {
+      headers: columns.map((c) => c.header),
+      keys: columns.map((c) => c.key),
+      rows: this.exportRows(scope).map((row) => columns.map((c) => (c.exportValue ? c.exportValue(row) : this.valueOf(row, c)))),
+    };
+  }
+
+  /**
+   * Exporte les données affichées et propose le téléchargement. Émet d'abord `exportRequest`, dont
+   * `preventDefault()` annule le téléchargement local.
+   */
+  exportData(format: UiTableExportFormat, scope: UiTableExportScope = 'all'): void {
+    const columns = this.exportColumns();
+    const rows = this.exportRows(scope);
+    const filename = tableExportFilename(this.exportFilename() || this.caption() || 'export', format);
+    let prevented = false;
+    this.exportRequest.emit({
+      format,
+      scope,
+      filename,
+      columns,
+      rows,
+      state: { search: this.search(), filters: this.filters(), sort: this.sort(), page: this.currentPage(), pageSize: this.effectivePageSize() },
+      preventDefault: () => (prevented = true),
+    });
+    if (prevented) return;
+    const data = this.exportTable(scope);
+    downloadFile(this.document, tableExportContent(format, data, { sheetName: this.caption(), ...this.exportOptions() }), tableExportMime(format), filename);
+    this.announcement.set(
+      `Export ${UI_TABLE_EXPORT_LABELS[format]} : ${rows.length} ligne${rows.length > 1 ? 's' : ''}, ${columns.length} colonne${columns.length > 1 ? 's' : ''}.`,
+    );
+  }
+
+  protected onExportClick(format: UiTableExportFormat): void {
+    this.exportData(format, this.exportScopeChoice() ? this.exportScope() : 'all');
+    this.exportMenuOpen.set(false);
+    (this.host.querySelector('.ui-table__export-button') as HTMLElement | null)?.focus();
+  }
+
+  protected onExportKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape' && this.exportMenuOpen()) {
+      event.stopPropagation();
+      this.exportMenuOpen.set(false);
+      (this.host.querySelector('.ui-table__export-button') as HTMLElement | null)?.focus();
+    }
+  }
+
   /** Valeur d'une cellule (accesseur `value` ou propriété `key`). */
   valueOf(row: T, column: UiTableColumn<T>): unknown {
     return column.value ? column.value(row) : (row as Record<string, unknown>)[column.key];
@@ -727,9 +849,9 @@ export class UiTable<T> {
   }
 
   protected onDocumentClick(event: MouseEvent): void {
-    if (!this.columnsMenuOpen()) return;
-    const menu = this.host.querySelector('.ui-table__columns');
-    if (menu && !menu.contains(event.target as Node)) this.columnsMenuOpen.set(false);
+    const target = event.target as Node;
+    if (this.columnsMenuOpen() && !this.host.querySelector('.ui-table__columns')?.contains(target)) this.columnsMenuOpen.set(false);
+    if (this.exportMenuOpen() && !this.host.querySelector('.ui-table__export')?.contains(target)) this.exportMenuOpen.set(false);
   }
 
   protected onColumnsKeydown(event: KeyboardEvent): void {

@@ -32,6 +32,7 @@ export class App {
       label: 'Saison (sombre)',
       icon: 'M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10ZM2 21c0-3 1.85-5.36 5.08-6',
     },
+    { value: 'imperium-dark', label: 'Imperium', icon: 'M2 18h20M4 18 2.5 7l5.5 4.5L12 4l4 7.5L21.5 7 20 18' },
   ];
 
   /** Sections filtrées : un élément est gardé si tous les mots de la recherche figurent dans ses mots-clés. */

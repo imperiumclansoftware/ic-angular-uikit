@@ -1,0 +1,44 @@
+@if (placeholderSrc() && state() !== 'loaded') {
+  <img class="ui-image__placeholder" [src]="placeholderSrc()" alt="" aria-hidden="true" decoding="async" />
+}
+@if (current(); as cur) {
+  @if (near() || eager()) {
+    @for (key of [attempt()]; track key) {
+      <!-- sizes et srcset avant src : le navigateur choisit la bonne variante dès le premier téléchargement. -->
+      <img
+        class="ui-image__img"
+        [class.ui-image__img--fade]="fade() && !instant()"
+        [attr.sizes]="cur.fallback ? null : (sizes() ?? null)"
+        [attr.srcset]="cur.srcset ?? null"
+        [attr.crossorigin]="crossOrigin() ?? null"
+        [attr.referrerpolicy]="referrerPolicy() ?? null"
+        [attr.width]="width() ?? null"
+        [attr.height]="height() ?? null"
+        [attr.fetchpriority]="priority() ? 'high' : null"
+        [attr.loading]="eager() ? 'eager' : 'lazy'"
+        decoding="async"
+        [src]="cur.src"
+        [alt]="alt()"
+        [style.object-fit]="fit()"
+        [style.object-position]="position()"
+        (load)="onLoad($event)"
+        (error)="onError()"
+      />
+    }
+  }
+}
+@if (showLoader() && !instant()) {
+  <ui-loader class="ui-image__loader" decorative [type]="loaderType()" />
+}
+@if (state() === 'error') {
+  <div class="ui-image__error">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="1.6" /><path d="m21 16-5-5-9 9" /><path d="M3 3l18 18" />
+    </svg>
+    <span class="ui-image__error-text">{{ errorText() }}@if (alt()) {<span class="ui-image__sr"> : {{ alt() }}</span>}</span>
+    @if (retry() && src()) {
+      <button type="button" class="ui-image__retry" (click)="reload()">Réessayer</button>
+    }
+  </div>
+}
+<div class="ui-image__overlay" [hidden]="state() !== 'loaded'"><ng-content select="[uiImageOverlay]" /></div>

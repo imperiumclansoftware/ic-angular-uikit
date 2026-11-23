@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { UiCard, UiCardHeader } from 'ic-angular-uikit';
 import { CodeBlock } from '../shared/code-block';
-import { COMPONENT_GROUPS, COMPONENT_SECTIONS } from '../shared/nav';
+import { COMPONENT_NAV, COMPONENT_SECTIONS } from '../shared/nav';
 
 @Component({
   selector: 'doc-getting-started',
@@ -87,7 +87,7 @@ export default class GettingStartedPage {
   protected readonly sections = COMPONENT_SECTIONS;
 
   protected descriptionOf(link: string[]): string {
-    return COMPONENT_GROUPS.find((g) => g.slug === link[1])?.description ?? '';
+    return COMPONENT_NAV.find((g) => g.slug === link[1])?.description ?? '';
   }
 
   protected readonly install = `npm install ic-angular-uikit`;

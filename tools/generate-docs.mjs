@@ -259,6 +259,23 @@ function generateApi() {
   return [...groups.values()].sort((a, b) => a.title.localeCompare(b.title));
 }
 
+/**
+ * Fichiers locaux importés par un exemple (`./donnees`, récursivement) : données et composants annexes, affichés
+ * dans « Voir le code » à côté de l'exemple. Les aides du site (`../../shared/…`) ne sont pas reprises.
+ */
+function localDependencies(file, seen = new Set([file])) {
+  const out = [];
+  const source = readFileSync(file, 'utf8');
+  for (const match of source.matchAll(/from\s+'(\.\/[^']+)'/g)) {
+    const target = join(dirname(file), match[1].endsWith('.ts') ? match[1] : `${match[1]}.ts`);
+    if (seen.has(target) || !existsSync(target)) continue;
+    seen.add(target);
+    out.push({ name: relative(dirname(file), target).replace(/\\/g, '/'), source: readFileSync(target, 'utf8') });
+    out.push(...localDependencies(target, seen));
+  }
+  return out;
+}
+
 function generateExamples() {
   const files = walk(examplesDir, (p) => p.endsWith('.example.ts')).sort();
   const imports = [];
@@ -285,6 +302,7 @@ function generateExamples() {
       order,
       alias,
       file: relative(root, file),
+      files: localDependencies(file),
       source: source.replace(/\/\*\*[\s\S]*?\*\/\n(?=@Component)/, ''),
     });
   });
@@ -295,7 +313,7 @@ function generateExamples() {
         .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id))
         .map(
           (e) =>
-            `    { id: ${JSON.stringify(e.id)}, title: ${JSON.stringify(e.title)}, description: ${JSON.stringify(e.description)}, file: ${JSON.stringify(e.file)}, component: ${e.alias}, source: ${JSON.stringify(e.source)} },`,
+            `    { id: ${JSON.stringify(e.id)}, title: ${JSON.stringify(e.title)}, description: ${JSON.stringify(e.description)}, file: ${JSON.stringify(e.file)}, component: ${e.alias}, source: ${JSON.stringify(e.source)}, files: ${JSON.stringify(e.files)} },`,
         )
         .join('\n');
       return `  ${JSON.stringify(slug)}: [\n${items}\n  ],`;
@@ -363,6 +381,15 @@ function generate() {
   const header = '// Fichier généré par tools/generate-docs.mjs — ne pas modifier.\n';
   const api = generateApi();
   write('api.ts', `${header}import type { ApiGroup } from '../shared/doc-types';\n\nexport const API: readonly ApiGroup[] = ${JSON.stringify(api, null, 2)};\n`);
+  // Index léger pour le menu et la recherche (chargé au démarrage) ; l'API complète reste dans les pages paresseuses.
+  const navIndex = api.map(({ slug, title, category, description, entries }) => ({
+    slug,
+    title,
+    category,
+    description,
+    selectors: entries.map((e) => `${e.name} ${e.selector ?? ''}`.trim()).join(' '),
+  }));
+  write('nav-index.ts', `${header}import type { NavGroup } from '../shared/doc-types';\n\nexport const NAV_INDEX: readonly NavGroup[] = ${JSON.stringify(navIndex, null, 2)};\n`);
   write('examples.ts', header + generateExamples());
   write('backends.ts', `${header}import type { BackendDocs } from '../shared/doc-types';\n\nexport const BACKENDS: Record<string, BackendDocs> = ${JSON.stringify(generateBackends(), null, 2)};\n`);
   write('tokens.ts', `${header}import type { TokenData } from '../shared/doc-types';\n\nexport const TOKENS: TokenData = ${JSON.stringify(generateTokens(), null, 2)};\n`);

@@ -49,7 +49,7 @@ import { provideUiKit } from 'ic-angular-uikit';
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideUiKit({ defaultTheme: 'system' }), // 'light' | 'dark' | 'system' | 'season-light' | 'season-dark'
+    provideUiKit({ defaultTheme: 'system' }), // 'light' | 'dark' | 'system' | 'season-light' | 'season-dark' | 'imperium-dark'
   ],
 };
 ```
@@ -84,18 +84,19 @@ export class Newsletter {
 | Catégorie | Composants |
 | --- | --- |
 | Mise en page | `ui-layout` + `ui-sidebar` (colonnes, rail, tiroir mobile), `ui-app-bar`, `ui-jumbotron` |
-| Actions | `uiButton` (7 variantes, icônes, chargement), `ui-toolbar` |
-| Formulaires | `ui-text-field`, `ui-textarea`, `ui-select`, `ui-checkbox`, `ui-radio-group`, `ui-switch`, `ui-file-upload` |
+| Actions | `uiButton` (7 variantes, icônes, chargement), `ui-toolbar`, `ui-context-menu` (clic droit, appui long, clavier) |
+| Formulaires | `ui-text-field`, `ui-textarea`, `ui-select`, `ui-checkbox`, `ui-radio-group`, `ui-switch`, `ui-file-upload`, `ui-rich-text-editor` (WYSIWYG) |
 | Navigation | `ui-menu` + `ui-submenu` (vertical / horizontal, multi-niveaux), `ui-tabs` (horizontaux / verticaux) |
-| Affichage | `ui-badge`, `ui-card`, `ui-carousel`, `ui-dashboard`, `ui-icon`, `ui-org-chart`, `ui-ribbon`, `ui-table`, `ui-season-effects` |
-| Retours & superpositions | `ui-alert`, `ui-dialog` |
+| Affichage | `ui-chat` (conversation avec une IA), `ui-image` (préchargement et loader), `ui-media-player` (musique, vidéos, YouTube / Vimeo) + `ui-mini-player`, `ui-rich-text` (HTML riche nettoyé), `ui-badge`, `ui-card`, `ui-carousel`, `ui-dashboard`, `ui-icon`, `ui-org-chart`, `ui-ribbon`, `ui-table` (recherche, filtres, pagination, export CSV / Excel / JSON), `ui-season-effects` |
+| Retours & superpositions | `ui-alert`, `ui-dialog`, `ui-loader` (loaders choisis globalement ou localement) |
+| Imperium | `ui-arabesque-frame`, `ui-banner-header`, `ui-section-divider`, `ui-branch-badge`, `ui-member-card`, `ui-event-card`, `ui-feed-post`, `ui-stat-block`, `ui-ornament`, `ui-framed-avatar` |
 
 Chaque composant documente ses inputs, outputs, slots, variables CSS et exemples dans le
 [site de documentation](https://angular.uikit.imperiumclan.fr/).
 
 ## Thèmes
 
-Thèmes fournis : `light`, `dark`, `season-light`, `season-dark` (couleurs selon la saison, animations facultatives avec
+Thèmes fournis : `light`, `dark`, `imperium-dark` (Imperium Clan, voir plus bas), `season-light`, `season-dark` (couleurs selon la saison, animations facultatives avec
 `<ui-season-effects />`). Le thème est porté par l'attribut `data-ui-theme` : sur `<html>` via `ThemeService`, ou sur
 n'importe quel élément pour une seule zone.
 
@@ -137,6 +138,113 @@ erreurs, vérification asynchrone et succès. Messages personnalisables par cham
 ```ts
 provideUiValidation({ showErrorsWhen: 'touched', messages: { required: 'Ce champ est obligatoire.' } });
 ```
+
+## Texte riche
+
+`ui-rich-text-editor` est un champ de formulaire dont la valeur est du **HTML nettoyé** par une liste blanche (titres,
+listes, liens, gras…) ; `ui-rich-text` l'affiche sans `innerHTML`. Le nettoyage est fait par un analyseur maison qui
+construit les nœuds DOM un par un : compatible CSP stricte et Trusted Types.
+
+```html
+<ui-rich-text-editor label="Article" [formControl]="content" [maxLength]="5000" />
+<ui-rich-text [html]="article.content" externalLinks="_blank" />
+```
+
+Le serveur doit **renettoyer** le HTML reçu avant de l'enregistrer : la documentation fournit des exemples Symfony
+(HtmlSanitizer) et Node.js (sanitize-html) avec la même liste blanche.
+
+## Thème Imperium Clan
+
+`imperium-dark` habille toute la librairie dans le style néo-héroïque du clan (or antique, arabesques, obsidienne) et
+ajoute des composants dédiés : `ui-arabesque-frame`, `ui-banner-header`, `ui-section-divider`, `ui-branch-badge`,
+`ui-member-card`, `ui-event-card`, `ui-feed-post`, `ui-stat-block`, `ui-ornament`.
+
+```ts
+provideUiKit({ defaultTheme: 'imperium-dark' })   // ou data-ui-theme="imperium-dark" sur une zone
+```
+
+Le thème attend quatre polices libres (OFL), à héberger avec l'application (pas d'appel à Google Fonts, compatible
+CSP stricte) :
+
+```sh
+npm install @fontsource-variable/cinzel @fontsource-variable/inter @fontsource/unifrakturcook @fontsource/jetbrains-mono
+```
+
+```json
+"styles": [
+  "node_modules/ic-angular-uikit/styles/ic-angular-uikit.css",
+  "node_modules/@fontsource-variable/inter/index.css",
+  "node_modules/@fontsource-variable/cinzel/index.css",
+  "node_modules/@fontsource/unifrakturcook/700.css",
+  "node_modules/@fontsource/jetbrains-mono/400.css"
+]
+```
+
+## Loaders et images
+
+Les indicateurs de chargement se choisissent pour toute l'application, pour une zone, ou localement :
+
+```ts
+// app.config.ts
+providers: [provideUiLoader({ type: 'dots', delay: 150 })]
+```
+
+```html
+<ui-loader />                     <!-- loader de l'application -->
+<ui-loader type="bars" size="lg" />
+<button uiButton loading>Envoyer</button>
+<ui-image src="/photos/lac.jpg" alt="Lac de montagne" ratio="16/9" />
+```
+
+Prédéfinis : `spinner`, `ring`, `dots`, `pulse`, `bars`, `orbit`, `grid`, `line`, `skeleton` ; un composant
+Angular peut être enregistré comme loader (`provideUiLoader({ loaders: { marque: BrandLoader } })`).
+`ui-image` réserve sa place, télécharge l'image à l'approche de la fenêtre, affiche le loader puis l'image en fondu ;
+`UiImagePreloader` précharge les images à venir.
+
+## Export des tables
+
+`exportable` ajoute un bouton « Exporter » à `ui-table` : CSV, Excel (`.xlsx`) ou JSON, avec exactement ce qui est
+affiché (recherche, filtres, tri, colonnes visibles et leur ordre ; toutes les lignes ou la page affichée).
+
+```html
+<ui-table [data]="orders" [columns]="columns" exportable exportFilename="commandes" paginated searchable />
+```
+
+Une colonne d'actions se déclare `exportable: false` ; `exportValue` donne la valeur exportée d'une cellule rendue par
+un template. Le classeur Excel est généré sans dépendance. Dans le CSV, les textes commençant par `=`, `+`, `-` ou `@`
+sont neutralisés (injection de formules). Pour un export côté serveur, appelez `preventDefault()` sur `(exportRequest)`.
+
+## Conversation avec une IA
+
+`ui-chat` affiche une conversation avec un assistant : réponse en flux rendue en Markdown (sans `innerHTML`),
+Arrêter, régénérer, copier, avis. Il appelle **votre** API, jamais le fournisseur d'IA directement : la clé reste sur
+le serveur.
+
+```ts
+protected readonly transport = uiChatHttpTransport(inject(HttpClient), '/api/chat');
+protected readonly messages = signal<UiChatMessage[]>([]);
+```
+
+```html
+<ui-chat [transport]="transport" [(messages)]="messages" welcome="Bonjour ! Posez votre question." />
+```
+
+L'API reçoit `{ messages: [{ role, content }] }` et répond en flux NDJSON (`{"text":"…"}` par morceau). La
+documentation fournit des serveurs Symfony et Node.js complets (SDK officiel d'Anthropic, limite de débit, validation).
+
+## Musique et vidéos
+
+`ui-media-player` lit des fichiers audio / vidéo (commandes accessibles, sous-titres WebVTT, visualisations
+prédéfinies pour la musique) et des vidéos YouTube / Vimeo, chargées seulement au clic (cookies de l'hébergeur).
+`ui-mini-player`, placé par exemple dans une `ui-app-bar`, suit le lecteur actif de la page.
+
+```html
+<ui-media-player [sources]="tracks" visualization="bars" />
+<ui-mini-player />
+```
+
+Pour YouTube et Vimeo, autorisez leurs lecteurs dans la CSP : `frame-src https://www.youtube-nocookie.com
+https://player.vimeo.com` (aucun script tiers n'est chargé dans votre page).
 
 ## Tableau de bord
 

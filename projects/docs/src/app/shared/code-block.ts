@@ -16,7 +16,7 @@ import { CodeLanguage, highlight } from './highlight';
       } @else {
         <ng-container *ngTemplateOutlet="copyButton" />
       }
-      <pre class="doc-code__pre" tabindex="0" [attr.aria-label]="filename() ? 'Code : ' + filename() : 'Code'"><code>@for (token of tokens(); track $index) {<span [class]="'tk-' + token.kind">{{ token.text }}</span>}</code></pre>
+      <pre class="doc-code__pre" tabindex="0" [style.max-height]="maxHeight() ?? null" [attr.aria-label]="filename() ? 'Code : ' + filename() : 'Code'"><code>@for (token of tokens(); track $index) {<span [class]="'tk-' + token.kind">{{ token.text }}</span>}</code></pre>
     </div>
     <ng-template #copyButton>
       <button type="button" class="doc-code__copy" (click)="copy()" [attr.aria-label]="copied() ? 'Copié' : 'Copier le code'">
@@ -28,6 +28,8 @@ import { CodeLanguage, highlight } from './highlight';
   styleUrl: './code-block.css',
 })
 export class CodeBlock {
+  /** Hauteur maximale (défilement au-delà), ex. `32rem`. */
+  readonly maxHeight = input<string>();
   readonly code = input.required<string>();
   readonly language = input<CodeLanguage>('ts');
   readonly filename = input<string>();

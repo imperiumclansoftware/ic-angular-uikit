@@ -1,0 +1,40 @@
+:host {
+  --_c: var(--ui-ornament-color, var(--ui-color-primary));
+  --_size: var(--ui-frame-ornament-size, 3.5rem);
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  padding: var(--ui-frame-padding, calc(var(--_size) * 0.55) calc(var(--_size) * 0.6));
+  border: 1px solid color-mix(in srgb, var(--_c) 38%, transparent);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+}
+:host(.ui-arabesque-frame--ornament-corners) { --_size: var(--ui-frame-ornament-size, 2.25rem); }
+:host(.ui-arabesque-frame--ornament-none) { --ui-frame-padding: var(--ui-space-5); }
+
+.ui-arabesque-frame__corner { position: absolute; width: var(--_size); height: var(--_size); color: var(--_c); }
+.ui-arabesque-frame__corner--tl { top: -1px; left: -1px; }
+.ui-arabesque-frame__corner--tr { top: -1px; right: -1px; scale: -1 1; }
+.ui-arabesque-frame__corner--bl { bottom: -1px; left: -1px; scale: 1 -1; }
+.ui-arabesque-frame__corner--br { right: -1px; bottom: -1px; scale: -1 -1; }
+
+/* Impérial : double filet, fond plus profond, lueur dorée. */
+:host(.ui-arabesque-frame--imperial) {
+  border-color: color-mix(in srgb, var(--_c) 65%, transparent);
+  background:
+    radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--_c) 9%, transparent), transparent 60%),
+    var(--ui-color-surface);
+  box-shadow: inset 0 0 0 4px var(--ui-color-surface), inset 0 0 0 5px color-mix(in srgb, var(--_c) 30%, transparent), 0 0 32px -12px color-mix(in srgb, var(--_c) 60%, transparent);
+}
+
+.ui-arabesque-frame__head { display: flex; flex-direction: column; align-items: center; gap: var(--ui-space-1); margin-bottom: var(--ui-space-4); text-align: center; }
+.ui-arabesque-frame__flourish { width: 6rem; color: var(--_c); }
+.ui-arabesque-frame__heading {
+  color: color-mix(in srgb, var(--_c) 55%, var(--ui-color-text));
+  font-family: var(--ui-font-family-display, inherit);
+  font-size: var(--ui-font-size-lg);
+  font-weight: 700;
+  letter-spacing: var(--ui-display-letter-spacing, 0.02em);
+  text-transform: var(--ui-display-transform, none);
+}
