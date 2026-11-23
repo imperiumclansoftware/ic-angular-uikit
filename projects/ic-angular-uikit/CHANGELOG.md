@@ -3,6 +3,16 @@
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; numérotation [SemVer](https://semver.org/lang/fr/)
 (en 0.x, une version mineure peut contenir des changements incompatibles).
 
+## [0.1.1] — 2026-11-23
+
+Aucun changement de code : mise à jour de la page npm.
+
+### Documentation
+
+- Site de documentation officiel : <https://angular.uikit.imperiumclan.fr/> (lien « Homepage » de la page npm et
+  README du paquet).
+- README : consultation hors ligne avec l'image Docker `iemperor/ic-angular-uikit-docs`.
+
 ## [0.1.0] — 2026-11-23
 
 Première version publiée.
