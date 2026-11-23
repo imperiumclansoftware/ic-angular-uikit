@@ -48,6 +48,7 @@ jobs:
           username: ${{ vars.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Tag git vX.Y.Z → X.Y.Z, X.Y, latest. Lancement manuel (pas de tag) : mêmes étiquettes, tirées de package.json.
       - id: meta
         uses: docker/metadata-action@v5
         with:
@@ -55,7 +56,6 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            # Lancement manuel (pas de tag git) : mêmes étiquettes, tirées de package.json.
             type=raw,value=${{ steps.version.outputs.value }},enable=${{ github.event_name == 'workflow_dispatch' }}
             type=raw,value=${{ steps.version.outputs.minor }},enable=${{ github.event_name == 'workflow_dispatch' }}
             type=raw,value=latest
