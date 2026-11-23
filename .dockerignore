@@ -1,0 +1,19 @@
+# Contexte de build minimal : sources et lockfile uniquement.
+.git
+.github
+.angular
+.vscode
+.idea
+node_modules
+dist
+coverage
+out-tsc
+tmp
+**/*.log
+npm-debug.log*
+.DS_Store
+# Régénérées dans l'image par tools/generate-docs.mjs
+projects/docs/src/app/generated
+# Secrets éventuels : jamais dans l'image
+.env*
+.npmrc

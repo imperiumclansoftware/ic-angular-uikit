@@ -24,7 +24,8 @@ npm install ic-angular-uikit
 | `projects/docs/src/app/examples/<composant>/*.example.ts` | Exemples affichés sur le site (découverts automatiquement) |
 | `projects/docs/src/backend-examples/<composant>/` | Onglet « Côté serveur » (Angular, Symfony, Node.js, PHP…) |
 | `tools/generate-docs.mjs` | Extrait l'API (inputs, outputs, models, méthodes, slots, variables CSS, types) avec le compilateur TypeScript |
-| `deploy/nginx.conf` | Configuration du site statique (CSP stricte + Trusted Types) |
+| `deploy/nginx.conf`, `deploy/security-headers.conf` | Configuration nginx du site statique (CSP stricte + Trusted Types, cache) |
+| `Dockerfile`, `DOCKERHUB.md`, `.github/workflows/docker.yml` | Image Docker de la documentation et sa publication |
 
 ## Commandes
 
@@ -60,12 +61,27 @@ Règles du projet : composants standalone `OnPush` à base de signaux, préfixe 
 `bypassSecurityTrust*`, WCAG 2.1 AA (contrastes vérifiés dans tous les thèmes, clavier, axe-core sans violation),
 styles qui ne fuient pas dans les instances imbriquées du même composant (combinateurs enfants).
 
+## Site de documentation en Docker
+
+Image statique (nginx non root, port 8080, CSP stricte, `HEALTHCHECK` sur `/healthz`), publiée sur Docker Hub :
+[`iemperor/ic-angular-uikit-docs`](https://hub.docker.com/r/iemperor/ic-angular-uikit-docs) (voir `DOCKERHUB.md`).
+
+```sh
+docker build -t ic-angular-uikit-docs .                      # --build-arg BASE_HREF=/docs/ pour un sous-chemin
+docker run -d -p 8080:8080 --read-only --tmpfs /tmp ic-angular-uikit-docs
+```
+
+Le workflow `.github/workflows/docker.yml` construit l'image (amd64 + arm64), la teste puis la publie à chaque tag
+`vX.Y.Z` (ou à la demande depuis l'onglet Actions). Il a besoin de la variable `DOCKERHUB_USERNAME` et du secret
+`DOCKERHUB_TOKEN` dans les réglages du dépôt GitHub.
+
 ## Publier une version
 
 1. Mettre à jour `version` dans `projects/ic-angular-uikit/package.json` et `CHANGELOG.md`.
 2. Vérifier : `npm run lint && npm test && npm run build`.
 3. Contrôler le contenu du paquet : `cd dist/ic-angular-uikit && npm pack --dry-run`.
-4. Publier depuis `dist/ic-angular-uikit` : `npm publish` (compte npm avec 2FA), puis créer le tag `vX.Y.Z`.
+4. Publier depuis `dist/ic-angular-uikit` : `npm publish` (compte npm avec 2FA), puis créer et pousser le tag
+   `vX.Y.Z` : l'image Docker de la documentation est alors publiée automatiquement.
 
 `npm run build:lib` recopie `LICENSE` et `CHANGELOG.md` dans le paquet.
 
