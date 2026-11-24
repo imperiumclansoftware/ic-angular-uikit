@@ -3,6 +3,44 @@
 Format inspiré de [Keep a Changelog](https://keepachangelog.com/fr/1.1.0/) ; numérotation [SemVer](https://semver.org/lang/fr/)
 (en 0.x, une version mineure peut contenir des changements incompatibles).
 
+## [0.3.0] — 2026-11-24
+
+### Ajouté
+
+- `ui-file-manager` : gestionnaire de fichiers — dossiers et fil d'Ariane, vignettes ou liste détaillée, recherche
+  et tri, sélection simple ou multiple (souris et clavier, motif ARIA « listbox »), nouveau dossier, renommage,
+  suppression confirmée, couper / coller et glisser-déposer, envoi par bouton ou dépôt avec progression et
+  annulation, menu contextuel, filtre `accept`, lecture seule.
+- `ui-file-picker` : champ de formulaire pour choisir un ou plusieurs fichiers ou médias dans une bibliothèque
+  (dialogue `ui-file-manager`, envoi compris) ; éléments affichés en liste ou en vignettes, retrait, ordre
+  modifiable (`reorderable`), `maxFiles`, `accept` ; valeur `UiFileEntry | null` ou tableau (`multiple`),
+  compatible `formControl` / `ngModel` / `[(value)]` et `Validators.required`.
+- `UiFileSource` : source de fichiers commune (`list` obligatoire, autres opérations facultatives) ;
+  `uiHttpFileSource()` (API REST) et `uiMemoryFileSource()` (démonstrations, tests) ; `ui-file-icon`,
+  `fileFamily()`, `entryMatchesAccept()`, `validateFileName()`.
+- `ui-media-gallery` : galerie d'images et de vidéos (grille ou mosaïque, légendes) et visionneuse plein écran
+  (précédent / suivant au clavier ou par balayage, préchargement des voisines, vidéos par `ui-media-player`, y
+  compris YouTube / Vimeo, miniatures, retour du focus).
+- `ui-media-picker` : choix d'une image ou d'une vidéo (bibliothèque ou adresse), texte alternatif obligatoire
+  pour une image (sauf image décorative cochée), légende ; `pick()` renvoie une promesse.
+- `ui-rich-text-editor` : bouton « Image ou vidéo » avec `[mediaSource]` (ou `[media]`), figures insérées après le
+  paragraphe courant, retirées par leur bouton ou Retour arrière ; `insertMedia()`.
+- Liste blanche HTML : option `media` (désactivée par défaut) de `parseRichText()`, `sanitizeRichText()`,
+  `serializeRichText()` et `ui-rich-text` (`[media]`) — `figure > img | video` (+ `figcaption`), adresses http(s) ou
+  relatives seulement, filtre `allowUrl` ; `createRichTextFigure()`, `safeRichTextMediaUrl()`.
+
+### Modifié
+
+- `ui-file-manager` : à l'ouverture d'un dossier au clavier, le focus passe au premier élément une fois le contenu
+  chargé (il était perdu quand la source répondait de façon asynchrone).
+- La valeur de l'éditeur ne se termine plus par un paragraphe vide (`<p><br></p>` après une ligne ou une figure).
+
+### Documentation
+
+- Onglet « Côté serveur » du gestionnaire de fichiers : API Symfony et Node.js (propriétaire vérifié, UUID v7,
+  type réel des fichiers, SVG / HTML refusés, quota, `nosniff` + CSP `sandbox`, requêtes partielles), validées par
+  un banc de 44 contrôles. Éditeur : variantes « médias » des nettoyeurs Symfony HtmlSanitizer et sanitize-html.
+
 ## [0.2.0] — 2026-11-23
 
 ### Ajouté

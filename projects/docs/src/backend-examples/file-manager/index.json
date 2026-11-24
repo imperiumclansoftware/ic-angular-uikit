@@ -1,0 +1,32 @@
+{
+  "intro": "`ui-file-manager` et `ui-media-picker` lisent et modifient la bibliothèque par une `UiFileSource`. `uiHttpFileSource(http, '/api/files')` implémente le contrat REST ci-dessous ; les serveurs d'exemple l'implémentent à l'identique.\n\nContrat : `GET /api/files?folder=id` → `{ items, path }` ; `POST /api/files/folders` `{ parentId, name }` → `201` élément ; `PATCH /api/files/{id}` `{ name }` → élément ; `POST /api/files/move` `{ ids, targetId }` → `204` ; `POST /api/files/delete` `{ ids }` → `204` ; `POST /api/files/upload` (multipart `file`, `folder`) → `201` élément ; `GET /api/files/{id}/content` → le fichier. Un élément : `{ id, name, kind, mimeType, size, modifiedAt, url, thumbnailUrl }`.\n\nRègles appliquées (le composant n'est qu'un confort, **le serveur décide**) : authentification ; CSRF « double submit » ; chaque identifiant est vérifié **avec le propriétaire** (inconnu ou à un autre → `404`, jamais de fuite d'existence) ; le client n'envoie **que des identifiants UUID v7**, jamais de chemin ; noms validés (ni `/ \\ : * ? \" < > |`, ni `..`, 120 caractères au plus) et uniques par dossier sans tenir compte de la casse (`409`) ; un dossier ne peut pas être déplacé dans lui-même (`422`) ; suppression récursive, fichiers du disque compris ; envoi : 20 Mo au plus (`413`), quota de 500 Mo par utilisateur, **type réel lu dans le contenu** et limité à une liste (images, vidéos, audio, PDF ; SVG et HTML refusés car ils peuvent contenir des scripts → `415`), extension remplacée par celle du type réel, fichier stocké sous son UUID hors du dossier public ; contenu servi au seul propriétaire avec `X-Content-Type-Options: nosniff`, `Content-Security-Policy: sandbox`, affiché pour les médias et en pièce jointe sinon, avec les requêtes partielles (lecture vidéo).\n\nLes deux serveurs passent le même banc d'essai de 44 contrôles (session, CSRF, noms, doublons, types réels, SVG, HTML déguisé, taille, en-têtes, requêtes partielles, isolation entre utilisateurs, déplacement circulaire, suppression récursive).",
+  "backends": [
+    {
+      "id": "angular",
+      "title": "Angular (client)",
+      "notes": "Une seule source pour le gestionnaire de fichiers, la galerie et le sélecteur de l'éditeur. `HttpClient` ajoute le jeton CSRF ; les adresses `/api/files/{id}/content` sont sur le même site (cookie de session envoyé, CSP `img-src 'self'`).",
+      "files": [{ "file": "angular.ts", "name": "app.config.ts + library.ts", "language": "ts" }]
+    },
+    {
+      "id": "symfony",
+      "title": "Symfony",
+      "install": "composer require symfony/orm-pack symfony/validator symfony/serializer symfony/mime symfony/uid symfony/security-bundle",
+      "notes": "Entité `FileNode` (`Uuid::v7()`, propriétaire, parent), DTO validés par `#[MapRequestPayload]` (contrainte composée `FileName`), `#[IsGranted]`, filtre propriétaire dans **chaque** requête, `Assert\\File` (type réel par `finfo`), `BinaryFileResponse` (requêtes partielles). Suppression récursive explicite, sans dépendre de `ON DELETE CASCADE` (non appliqué par SQLite par défaut). Limites PHP : `upload_max_filesize = 20M`, `post_max_size = 21M`. Générez la migration avec `bin/console make:migration`.",
+      "files": [
+        { "file": "symfony-FileNode.php", "name": "src/Entity/FileNode.php", "language": "php" },
+        { "file": "symfony-FileName.php", "name": "src/Dto/FileName.php", "language": "php" },
+        { "file": "symfony-FolderInput.php", "name": "src/Dto/FolderInput.php", "language": "php" },
+        { "file": "symfony-RenameInput.php", "name": "src/Dto/RenameInput.php", "language": "php" },
+        { "file": "symfony-IdsInput.php", "name": "src/Dto/IdsInput.php", "language": "php" },
+        { "file": "symfony-FileController.php", "name": "src/Controller/FileController.php", "language": "php" }
+      ]
+    },
+    {
+      "id": "node",
+      "title": "Node.js",
+      "install": "npm install express@5 multer@2 file-type@21",
+      "notes": "Express 5, Multer (mémoire, taille limitée pendant la réception), `file-type` (type réel d'après les premiers octets), SQLite intégré à Node (`node:sqlite`, requêtes préparées, transactions), UUID v7 généré avec `crypto.randomBytes`. `res.sendFile` gère les requêtes partielles.",
+      "files": [{ "file": "node-express.mjs", "name": "server.mjs", "language": "ts" }]
+    }
+  ]
+}

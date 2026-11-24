@@ -1,0 +1,267 @@
+<div class="ui-fm__toolbar">
+  <nav class="ui-fm__crumbs" [attr.aria-label]="'Emplacement — ' + ariaLabel()">
+    <ol>
+      @for (segment of path(); track segment.id; let last = $last) {
+        <li>
+          @if (last) {
+            <span class="ui-fm__crumb ui-fm__crumb--current" aria-current="location">{{ segment.name }}</span>
+          } @else {
+            <button
+              type="button"
+              class="ui-fm__crumb"
+              [class.ui-fm__crumb--drop]="dropTarget() === (segment.id ?? '#root')"
+              (click)="openFolder(segment.id)"
+              (dragover)="onDragOverTarget($event, segment.id)"
+              (dragleave)="dropTarget.set(null)"
+              (drop)="onDropTarget($event, segment.id)"
+            >
+              {{ segment.name }}
+            </button>
+            <svg class="ui-fm__sep" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m9 6 6 6-6 6" /></svg>
+          }
+        </li>
+      }
+    </ol>
+  </nav>
+
+  <div class="ui-fm__tools">
+    <ui-text-field class="ui-fm__search" type="search" size="sm" clearable ariaLabel="Rechercher dans ce dossier" placeholder="Rechercher…" [value]="search()" (valueChange)="search.set($event)" />
+    <ui-select class="ui-fm__sort" size="sm" ariaLabel="Trier" [options]="sortOptions" [value]="sortValue()" (valueChange)="setSort($event)" />
+    <div class="ui-fm__views" role="group" aria-label="Affichage">
+      <button type="button" class="ui-fm__icon-btn" aria-label="Vignettes" title="Vignettes" [attr.aria-pressed]="view() === 'grid'" (click)="view.set('grid')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg>
+      </button>
+      <button type="button" class="ui-fm__icon-btn" aria-label="Liste détaillée" title="Liste détaillée" [attr.aria-pressed]="view() === 'list'" (click)="view.set('list')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" /></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="ui-fm__actions">
+    @if (path().length > 1) {
+      <button uiButton type="button" size="sm" variant="ghost" (click)="goUp()" aria-keyshortcuts="Alt+ArrowUp">Dossier parent</button>
+    }
+    @if (can().create) {
+      <button uiButton type="button" size="sm" variant="outline" (click)="startCreate()">Nouveau dossier</button>
+    }
+    @if (can().upload) {
+      <button uiButton type="button" size="sm" (click)="chooseFiles()">Envoyer des fichiers</button>
+    }
+    @if (selection().length) {
+      <span class="ui-fm__count">{{ selection().length }} sélectionné{{ selection().length > 1 ? 's' : '' }}</span>
+      @if (selection().length === 1 && selection()[0].kind === 'file') {
+        <button uiButton type="button" size="sm" variant="ghost" (click)="open.emit(selection()[0])">Ouvrir</button>
+      }
+      @if (can().rename && selection().length === 1) {
+        <button uiButton type="button" size="sm" variant="ghost" aria-keyshortcuts="F2" (click)="startRename()">Renommer</button>
+      }
+      @if (can().move) {
+        <button uiButton type="button" size="sm" variant="ghost" aria-keyshortcuts="Control+X" (click)="cut(selection())">Couper</button>
+      }
+      @if (can().remove) {
+        <button uiButton type="button" size="sm" variant="ghost" aria-keyshortcuts="Delete" (click)="askDelete(selection())">Supprimer</button>
+      }
+    }
+    @if (clipboard().length) {
+      <button uiButton type="button" size="sm" variant="secondary" aria-keyshortcuts="Control+V" (click)="paste(folder())">
+        Coller ici ({{ clipboard().length }})
+      </button>
+      <button uiButton type="button" size="sm" variant="ghost" (click)="clipboard.set([])">Annuler le déplacement</button>
+    }
+    <ng-content select="[uiFileManagerActions]" />
+  </div>
+  <input #fileInput type="file" multiple hidden [attr.accept]="accept() || null" (change)="onFileInput($event)" />
+</div>
+
+@if (actionError(); as message) {
+  <div class="ui-fm__alert" role="alert">
+    <span>{{ message }}</span>
+    <button type="button" class="ui-fm__icon-btn" aria-label="Fermer le message" (click)="actionError.set(null)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+    </button>
+  </div>
+}
+
+<div
+  class="ui-fm__body"
+  [class.ui-fm__body--drop]="fileDrag()"
+  [attr.aria-busy]="loading() || null"
+  [uiContextMenuTrigger]="menu"
+  [uiContextMenuData]="null"
+  (dragover)="onBodyDragOver($event)"
+  (dragleave)="onBodyDragLeave($event)"
+  (drop)="onBodyDrop($event)"
+>
+  @if (view() === 'list' && items().length) {
+    <div class="ui-fm__head" aria-hidden="true">
+      <span>Nom</span><span>Taille</span><span>Modifié</span><span>Type</span>
+    </div>
+  }
+  @if (loadError(); as message) {
+    <div class="ui-fm__state" role="alert">
+      <p>{{ message }}</p>
+      <button uiButton type="button" size="sm" variant="outline" (click)="refresh()">Réessayer</button>
+    </div>
+  } @else if (loading() && !listing()) {
+    <div class="ui-fm__state"><ui-loader label="Chargement des fichiers…" /></div>
+  } @else if (!items().length) {
+    <div class="ui-fm__state">
+      <ui-file-icon class="ui-fm__empty-icon" [entry]="{ kind: 'folder', name: '' }" />
+      <p>{{ search() ? 'Aucun élément ne correspond à « ' + search() + ' ».' : 'Ce dossier est vide.' }}</p>
+      @if (can().upload && !search()) {
+        <p class="ui-fm__hint">Déposez des fichiers ici ou utilisez « Envoyer des fichiers ».</p>
+      }
+    </div>
+  } @else {
+    <!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -->
+    <ul
+      #list
+      class="ui-fm__items"
+      role="listbox"
+      [attr.aria-label]="ariaLabel() + ' : ' + (path().at(-1)?.name ?? '')"
+      [attr.aria-multiselectable]="selectionMode() === 'multiple'"
+      [attr.aria-describedby]="baseId + '-help'"
+      (keydown)="onListKeydown($event)"
+    >
+      @for (entry of items(); track entry.id) {
+        @let selected = selectedIds().has(entry.id);
+        <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events -->
+        <li
+          class="ui-fm__item"
+          role="option"
+          [attr.data-id]="entry.id"
+          [attr.aria-selected]="selected"
+          [attr.tabindex]="tabStopId() === entry.id ? 0 : -1"
+          [class.ui-fm__item--selected]="selected"
+          [class.ui-fm__item--cut]="clipboardIds().has(entry.id)"
+          [class.ui-fm__item--drop]="dropTarget() === entry.id"
+          [attr.draggable]="can().move ? 'true' : null"
+          [uiContextMenuTrigger]="menu"
+          [uiContextMenuData]="entry"
+          (click)="onItemClick($event, entry)"
+          (dblclick)="openEntry(entry)"
+          (focus)="focusId.set(entry.id)"
+          (dragstart)="onDragStart($event, entry)"
+          (dragend)="onDragEnd()"
+          (dragover)="entry.kind === 'folder' && onDragOverTarget($event, entry.id)"
+          (dragleave)="dropTarget.set(null)"
+          (drop)="entry.kind === 'folder' && onDropTarget($event, entry.id)"
+        >
+          <span class="ui-fm__thumb">
+            @if (view() === 'grid' && thumbnail(entry); as src) {
+              <ui-image [src]="src" alt="" ratio="4/3" loader="skeleton" />
+              @if (isVideo(entry)) {
+                <span class="ui-fm__play" aria-hidden="true">▶</span>
+              }
+            } @else {
+              <ui-file-icon [entry]="entry" />
+            }
+          </span>
+          <span class="ui-fm__name">{{ entry.name }}</span>
+          @if (view() === 'list') {
+            <span class="ui-fm__meta">{{ sizeLabel(entry) }}</span>
+            <span class="ui-fm__meta">{{ dateLabel(entry) }}</span>
+            <span class="ui-fm__meta">{{ typeLabel(entry) }}</span>
+          } @else {
+            <span class="ui-fm__sr">, {{ typeLabel(entry) }}{{ sizeLabel(entry) ? ', ' + sizeLabel(entry) : '' }}</span>
+          }
+          @if (selected) {
+            <svg class="ui-fm__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+          }
+        </li>
+      }
+    </ul>
+  }
+  @if (fileDrag()) {
+    <div class="ui-fm__dropzone" aria-hidden="true">Déposez pour envoyer dans « {{ path().at(-1)?.name }} »</div>
+  }
+  @if (loading() && listing()) {
+    <ui-loader class="ui-fm__refresh" type="line" decorative />
+  }
+</div>
+
+<p class="ui-fm__sr" [id]="baseId + '-help'">
+  Entrée pour ouvrir, Espace pour sélectionner, Retour arrière pour remonter, menu contextuel avec Maj+F10.
+</p>
+
+@if (uploads().length) {
+  <section class="ui-fm__uploads" aria-label="Envois">
+    <ul>
+      @for (upload of uploads(); track upload.id) {
+        <li class="ui-fm__upload" [class]="'ui-fm__upload--' + upload.status">
+          <span class="ui-fm__upload-name">{{ upload.name }}</span>
+          @if (upload.status === 'uploading') {
+            <span class="ui-fm__progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" [attr.aria-valuenow]="upload.progress" [attr.aria-label]="'Envoi de ' + upload.name">
+              <span [style.width.%]="upload.progress"></span>
+            </span>
+            <button type="button" class="ui-fm__icon-btn" [attr.aria-label]="'Annuler l’envoi de ' + upload.name" (click)="cancelUpload(upload)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+            </button>
+          } @else if (upload.status === 'done') {
+            <span class="ui-fm__upload-status">Envoyé</span>
+          } @else {
+            <span class="ui-fm__upload-status">{{ upload.error }}</span>
+          }
+        </li>
+      }
+    </ul>
+    @if (uploadsDone()) {
+      <button uiButton type="button" size="sm" variant="ghost" (click)="clearUploads()">Effacer les envois terminés</button>
+    }
+  </section>
+}
+
+<p class="ui-fm__sr" aria-live="polite" aria-atomic="true">{{ announcement() }}</p>
+
+<ui-context-menu #menu (opened)="onMenuOpened($event)">
+  @let target = asEntry(menu.data());
+  @if (target) {
+    <button uiMenuItem (click)="openEntry(target)">{{ target.kind === 'folder' ? 'Ouvrir le dossier' : 'Ouvrir' }}</button>
+    @if (can().rename && menuTargets(target).length === 1) {
+      <button uiMenuItem shortcut="F2" (click)="startRename(target)">Renommer</button>
+    }
+    @if (can().move) {
+      <button uiMenuItem shortcut="Ctrl+X" (click)="cut(menuTargets(target))">Couper</button>
+    }
+    @if (can().move && clipboard().length && target.kind === 'folder') {
+      <button uiMenuItem (click)="paste(target.id)">Coller dans ce dossier</button>
+    }
+    @if (can().remove) {
+      <ui-menu-separator />
+      <button uiMenuItem tone="danger" shortcut="Suppr" (click)="askDelete(menuTargets(target))">Supprimer</button>
+    }
+  } @else {
+    @if (can().create) {
+      <button uiMenuItem (click)="startCreate()">Nouveau dossier</button>
+    }
+    @if (can().upload) {
+      <button uiMenuItem (click)="chooseFiles()">Envoyer des fichiers</button>
+    }
+    @if (can().move && clipboard().length) {
+      <button uiMenuItem shortcut="Ctrl+V" (click)="paste(folder())">Coller ici</button>
+    }
+    <button uiMenuItem (click)="refresh()">Actualiser</button>
+  }
+</ui-context-menu>
+
+<ui-dialog [open]="!!nameDialog()" [title]="nameDialog()?.mode === 'create' ? 'Nouveau dossier' : 'Renommer'" size="sm" (closed)="nameDialog.set(null)">
+  @if (nameDialog(); as dialog) {
+    <form class="ui-fm__form" (submit)="$event.preventDefault(); submitName()">
+      <ui-text-field label="Nom" autocomplete="off" [value]="dialog.value" [error]="dialog.error" (valueChange)="setDialogName($event)" />
+      <div class="ui-fm__form-actions">
+        <button uiButton type="button" variant="outline" (click)="nameDialog.set(null)">Annuler</button>
+        <button uiButton type="submit" [loading]="busy()">{{ dialog.mode === 'create' ? 'Créer' : 'Renommer' }}</button>
+      </div>
+    </form>
+  }
+</ui-dialog>
+
+<ui-dialog [open]="!!deleteDialog()" title="Confirmer la suppression" size="sm" (closed)="deleteDialog.set(null)">
+  @if (deleteDialog(); as entries) {
+    <p class="ui-fm__confirm">{{ deleteMessage(entries) }}</p>
+    <div class="ui-fm__form-actions">
+      <button uiButton type="button" variant="outline" (click)="deleteDialog.set(null)">Annuler</button>
+      <button uiButton type="button" variant="danger" [loading]="busy()" (click)="confirmDelete()">Supprimer</button>
+    </div>
+  }
+</ui-dialog>

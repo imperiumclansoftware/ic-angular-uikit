@@ -6,7 +6,43 @@ import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
  * puis un sérialiseur produit une chaîne HTML propre. Seuls les éléments et l'attribut ci-dessous survivent :
  * `p`, `h2`–`h4`, `blockquote`, `pre`, `ul`, `ol`, `li`, `hr`, `br`, `strong`, `em`, `u`, `s`, `code`, `a[href]`
  * (http, https, mailto, tel ou adresse relative).
+ *
+ * Avec l'option `media` (désactivée par défaut), les images et vidéos sont acceptées, toujours sous la forme
+ * `figure > img[src alt width height]` ou `figure > video[src poster title]` (+ `figcaption` facultative), avec des
+ * adresses http(s) ou relatives seulement (jamais `data:` ni `javascript:`).
  */
+
+/** Médias acceptés : `true`, ou un filtre d'adresses (par exemple, seulement votre domaine). */
+export interface UiRichTextMediaPolicy {
+  /** Adresse acceptée (après le filtre de schéma http, https ou relative). */
+  allowUrl?: (url: string) => boolean;
+}
+
+/** Options d'analyse et de nettoyage. */
+export interface UiRichTextOptions {
+  /** Accepte images et vidéos (`figure`). Défaut : non. */
+  media?: boolean | UiRichTextMediaPolicy;
+}
+
+/** Média à insérer (`createRichTextFigure`). */
+export interface UiRichTextMedia {
+  kind: 'image' | 'video';
+  src: string;
+  /** Texte alternatif (image) ou titre (vidéo). `''` : image décorative. */
+  alt: string;
+  caption?: string;
+  width?: number;
+  height?: number;
+  /** Affiche de la vidéo. */
+  poster?: string;
+}
+
+type MediaPolicy = UiRichTextMediaPolicy | null;
+
+function mediaPolicy(options: UiRichTextOptions | undefined): MediaPolicy {
+  const media = options?.media;
+  return media ? (media === true ? {} : media) : null;
+}
 
 /** Type de bloc proposé par l'éditeur. */
 export type UiRichTextBlock = 'p' | 'h2' | 'h3' | 'h4' | 'blockquote' | 'pre';
@@ -54,8 +90,14 @@ const ENTITIES: Record<string, string> = {
 interface RawElement {
   name: string;
   href: string | null;
+  /** Attributs des médias (`src`, `alt`, `width`, `height`, `poster`, `title`) ; vide pour les autres éléments. */
+  attrs: Record<string, string>;
   children: RawNode[];
 }
+
+/** Éléments dont les attributs de média sont lus. */
+const MEDIA_TAGS = new Set(['img', 'video', 'source']);
+const MEDIA_ATTRS = new Set(['src', 'alt', 'width', 'height', 'poster', 'title']);
 type RawNode = RawElement | string;
 
 function decodeEntities(text: string): string {
@@ -78,9 +120,114 @@ export function safeRichTextUrl(value: string | null | undefined): string | null
   return url;
 }
 
+/** Attributs de média d'une balise (noms connus seulement, valeurs décodées). */
+function mediaAttributes(source: string): Record<string, string> {
+  const attrs: Record<string, string> = {};
+  for (const m of source.matchAll(/([a-zA-Z][\w:-]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/g)) {
+    const name = m[1].toLowerCase();
+    if (MEDIA_ATTRS.has(name) && !(name in attrs)) attrs[name] = decodeEntities(m[2] ?? m[3] ?? m[4] ?? '');
+  }
+  return attrs;
+}
+
+/** Adresse de média autorisée (http, https ou relative ; ni `data:`, ni `mailto:`…), ou `null`. */
+export function safeRichTextMediaUrl(value: string | null | undefined, policy: UiRichTextMediaPolicy = {}): string | null {
+  const url = safeRichTextUrl(value);
+  if (!url || /^(mailto:|tel:)/i.test(url)) return null;
+  return !policy.allowUrl || policy.allowUrl(url) ? url : null;
+}
+
+/** Dimension en pixels (entier de 1 à 10 000), ou `null`. */
+function dimension(value: string | number | undefined): string | null {
+  const n = typeof value === 'number' ? value : /^\s*\d{1,5}\s*$/.test(value ?? '') ? Number(value) : NaN;
+  return Number.isInteger(n) && n > 0 && n <= 10000 ? String(n) : null;
+}
+
+/**
+ * Figure DOM sûre pour un média (adresse filtrée, attributs connus seulement), ou `null` si l'adresse est refusée.
+ * Utilisée par l'éditeur pour insérer une image ou une vidéo choisie.
+ */
+export function createRichTextFigure(doc: Document, media: UiRichTextMedia, policy: UiRichTextMediaPolicy = {}): HTMLElement | null {
+  const src = safeRichTextMediaUrl(media.src, policy);
+  if (!src) return null;
+  const figure = doc.createElement('figure');
+  if (media.kind === 'image') {
+    const img = doc.createElement('img');
+    img.setAttribute('src', src);
+    img.setAttribute('alt', media.alt.trim().slice(0, 300));
+    const width = dimension(media.width);
+    const height = dimension(media.height);
+    if (width && height) {
+      img.setAttribute('width', width);
+      img.setAttribute('height', height);
+    }
+    img.setAttribute('loading', 'lazy');
+    img.setAttribute('decoding', 'async');
+    figure.append(img);
+  } else {
+    const video = doc.createElement('video');
+    video.setAttribute('src', src);
+    const poster = media.poster ? safeRichTextMediaUrl(media.poster, policy) : null;
+    if (poster) video.setAttribute('poster', poster);
+    if (media.alt.trim()) video.setAttribute('title', media.alt.trim().slice(0, 300));
+    video.setAttribute('controls', '');
+    video.setAttribute('preload', 'metadata');
+    video.setAttribute('playsinline', '');
+    figure.append(video);
+  }
+  const caption = media.caption?.trim();
+  if (caption) {
+    const figcaption = doc.createElement('figcaption');
+    figcaption.textContent = caption.slice(0, 500);
+    figure.append(figcaption);
+  }
+  return figure;
+}
+
+/** Premier élément brut d'un des noms donnés (parcours en profondeur). */
+function findRaw(nodes: RawNode[], names: Set<string>): RawElement | null {
+  for (const node of nodes) {
+    if (typeof node === 'string') continue;
+    if (names.has(node.name)) return node;
+    const found = findRaw(node.children, names);
+    if (found) return found;
+  }
+  return null;
+}
+
+const MEDIA_ELEMENTS = new Set(['img', 'video']);
+/** Éléments qui deviennent une figure quand les médias sont acceptés. */
+const FIGURE_SOURCES = new Set(['img', 'video', 'figure', 'picture']);
+
+/** Figure d'un élément brut (`img`, `video`, `figure`, `picture`), ou `null`. */
+function rawFigure(node: RawElement, doc: Document, policy: UiRichTextMediaPolicy): HTMLElement | null {
+  const media = MEDIA_ELEMENTS.has(node.name) ? node : findRaw(node.children, MEDIA_ELEMENTS);
+  if (!media) return null;
+  const src = media.attrs['src'] || (media.name === 'video' ? findRaw(media.children, new Set(['source']))?.attrs['src'] : undefined);
+  const caption = node.name === 'figure' ? findRaw(node.children, new Set(['figcaption'])) : null;
+  const figure = createRichTextFigure(
+    doc,
+    {
+      kind: media.name === 'img' ? 'image' : 'video',
+      src: src ?? '',
+      alt: media.name === 'img' ? (media.attrs['alt'] ?? '') : (media.attrs['title'] ?? ''),
+      width: Number(dimension(media.attrs['width'])) || undefined,
+      height: Number(dimension(media.attrs['height'])) || undefined,
+      poster: media.attrs['poster'],
+    },
+    policy,
+  );
+  if (figure && caption) {
+    const figcaption = doc.createElement('figcaption');
+    figcaption.append(...convert(caption.children, 'inline', doc, null));
+    if (hasText(figcaption)) figure.append(figcaption);
+  }
+  return figure;
+}
+
 /** Analyse une chaîne HTML en arbre brut (balises, attribut href, texte décodé). */
 function tokenize(html: string): RawNode[] {
-  const root: RawElement = { name: '#root', href: null, children: [] };
+  const root: RawElement = { name: '#root', href: null, attrs: {}, children: [] };
   const stack: RawElement[] = [root];
   const top = () => stack[stack.length - 1];
   const text = (value: string) => {
@@ -158,7 +305,7 @@ function tokenize(html: string): RawNode[] {
       const m = /\shref\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i.exec(` ${attrs}`);
       href = m ? decodeEntities(m[1] ?? m[2] ?? m[3] ?? '') : null;
     }
-    const element: RawElement = { name, href, children: [] };
+    const element: RawElement = { name, href, attrs: MEDIA_TAGS.has(name) ? mediaAttributes(attrs) : {}, children: [] };
     top().children.push(element);
     if (!VOID.has(name) && !attrs.trimEnd().endsWith('/')) stack.push(element);
   }
@@ -172,7 +319,14 @@ function hasText(node: Node): boolean {
 }
 
 function isBlockNode(node: Node): boolean {
-  return node.nodeType === 1 && BLOCK_NAMES.has((node as Element).tagName.toLowerCase());
+  if (node.nodeType !== 1) return false;
+  const name = (node as Element).tagName.toLowerCase();
+  return BLOCK_NAMES.has(name) || name === 'figure';
+}
+
+/** Texte, ligne horizontale ou média. */
+function hasContent(node: Node): boolean {
+  return hasText(node) || node.nodeName === 'HR' || node.nodeName === 'FIGURE' || (node.nodeType === 1 && !!(node as Element).querySelector('hr, figure'));
 }
 
 /** Regroupe les suites de nœuds en ligne d'un contexte de flux dans des paragraphes. */
@@ -202,11 +356,19 @@ function groupFlow(doc: Document, nodes: Node[]): Node[] {
   return out;
 }
 
-function convert(nodes: RawNode[], ctx: Context, doc: Document): Node[] {
+function convert(nodes: RawNode[], ctx: Context, doc: Document, media: MediaPolicy): Node[] {
   const out: Node[] = [];
   for (const node of nodes) {
     if (typeof node === 'string') {
       out.push(doc.createTextNode(node));
+      continue;
+    }
+    if (media && FIGURE_SOURCES.has(node.name) && (node.name !== 'figure' || findRaw(node.children, MEDIA_ELEMENTS))) {
+      // Médias : uniquement au niveau des blocs (une image dans une liste ou une ligne de texte est retirée).
+      if (ctx === 'flow') {
+        const figure = rawFigure(node, doc, media);
+        if (figure) out.push(figure);
+      }
       continue;
     }
     if (DROPPED.has(node.name)) continue;
@@ -216,25 +378,25 @@ function convert(nodes: RawNode[], ctx: Context, doc: Document): Node[] {
       continue;
     }
     if (ctx === 'pre') {
-      out.push(...convert(node.children, 'pre', doc));
+      out.push(...convert(node.children, 'pre', doc, media));
       continue;
     }
     if (INLINE.has(name)) {
       const href = name === 'a' ? safeRichTextUrl(node.href) : null;
       if (name === 'a' && !href) {
-        out.push(...convert(node.children, ctx === 'flow' || ctx === 'list' ? 'inline' : ctx, doc));
+        out.push(...convert(node.children, ctx === 'flow' || ctx === 'list' ? 'inline' : ctx, doc, media));
         continue;
       }
       const element = doc.createElement(name);
       if (href) element.setAttribute('href', href);
-      element.append(...convert(node.children, 'inline', doc));
+      element.append(...convert(node.children, 'inline', doc, media));
       if (element.childNodes.length) out.push(element);
       continue;
     }
     const block = BLOCK_NAMES.has(name) || CONTAINERS.has(name) || name === 'table' || name === 'dl';
     // Bloc dans un contexte en ligne : son contenu est gardé, séparé par un saut de ligne.
     if (ctx === 'inline' || (ctx === 'item' && !LISTS.has(name))) {
-      const inner = convert(node.children, ctx, doc);
+      const inner = convert(node.children, ctx, doc, media);
       if (block && out.length && inner.length && name !== 'li') out.push(doc.createElement('br'));
       out.push(...inner);
       continue;
@@ -250,7 +412,7 @@ function convert(nodes: RawNode[], ctx: Context, doc: Document): Node[] {
         }
         pending = [];
       };
-      for (const child of convert(node.children, 'list', doc)) {
+      for (const child of convert(node.children, 'list', doc, media)) {
         if (child.nodeName === 'LI') {
           wrap();
           list.append(child);
@@ -264,18 +426,18 @@ function convert(nodes: RawNode[], ctx: Context, doc: Document): Node[] {
     }
     if (name === 'li') {
       const li = doc.createElement(ctx === 'list' ? 'li' : 'p');
-      li.append(...convert(node.children, ctx === 'list' ? 'item' : 'inline', doc));
+      li.append(...convert(node.children, ctx === 'list' ? 'item' : 'inline', doc, media));
       if (hasText(li) || li.querySelector('ul, ol')) out.push(li);
       continue;
     }
     if (ctx === 'list') {
       // Élément inattendu dans une liste : son contenu sera placé dans un élément de liste.
-      out.push(...convert(node.children, 'list', doc));
+      out.push(...convert(node.children, 'list', doc, media));
       continue;
     }
     if (name === 'pre') {
       const pre = doc.createElement('pre');
-      pre.append(doc.createTextNode(convert(node.children, 'pre', doc).map((n) => n.textContent).join('')));
+      pre.append(doc.createTextNode(convert(node.children, 'pre', doc, media).map((n) => n.textContent).join('')));
       if (hasText(pre)) out.push(pre);
       continue;
     }
@@ -284,20 +446,33 @@ function convert(nodes: RawNode[], ctx: Context, doc: Document): Node[] {
       continue;
     }
     if (TEXT_BLOCKS.has(name)) {
-      const element = doc.createElement(name);
-      element.append(...convert(node.children, 'inline', doc));
-      out.push(element);
+      // Médias dans un paragraphe (`<p><img></p>`, fréquent au collage) : le paragraphe est coupé autour des figures.
+      const parts: RawNode[][] = [[]];
+      const figures: (HTMLElement | null)[] = [];
+      for (const child of node.children) {
+        if (media && typeof child !== 'string' && FIGURE_SOURCES.has(child.name)) {
+          figures.push(rawFigure(child, doc, media));
+          parts.push([]);
+        } else parts[parts.length - 1].push(child);
+      }
+      parts.forEach((part, i) => {
+        const element = doc.createElement(name);
+        element.append(...convert(part, 'inline', doc, media));
+        if (parts.length === 1 || hasText(element)) out.push(element);
+        const figure = figures[i];
+        if (figure) out.push(figure);
+      });
       continue;
     }
     if (name === 'blockquote') {
       const quote = doc.createElement('blockquote');
-      quote.append(...groupFlow(doc, convert(node.children, 'flow', doc)));
-      if (hasText(quote)) out.push(quote);
+      quote.append(...groupFlow(doc, convert(node.children, 'flow', doc, media)));
+      if (hasContent(quote)) out.push(quote);
       continue;
     }
     if (block) {
       // Conteneur (div, cellule…) : un paragraphe s'il ne contient que du texte, sinon son contenu.
-      const inner = convert(node.children, 'flow', doc);
+      const inner = convert(node.children, 'flow', doc, media);
       if (inner.some(isBlockNode)) out.push(...groupFlow(doc, inner));
       else if (inner.some((n) => hasText(n) || n.nodeName === 'BR')) {
         const p = doc.createElement('p');
@@ -307,7 +482,7 @@ function convert(nodes: RawNode[], ctx: Context, doc: Document): Node[] {
       continue;
     }
     // Élément inconnu en ligne (span, font, sup…) : retiré, son contenu est gardé.
-    out.push(...convert(node.children, ctx, doc));
+    out.push(...convert(node.children, ctx, doc, media));
   }
   return out;
 }
@@ -316,10 +491,10 @@ function convert(nodes: RawNode[], ctx: Context, doc: Document): Node[] {
  * Construit un fragment DOM sûr à partir de HTML non fiable (analyse à liste blanche, sans `innerHTML`).
  * Les blocs vides sont retirés ; un texte sans bloc est placé dans des paragraphes.
  */
-export function parseRichText(html: string | null | undefined, doc: Document = document): DocumentFragment {
+export function parseRichText(html: string | null | undefined, doc: Document = document, options?: UiRichTextOptions): DocumentFragment {
   const fragment = doc.createDocumentFragment();
   if (!html) return fragment;
-  fragment.append(...groupFlow(doc, convert(tokenize(html), 'flow', doc)));
+  fragment.append(...groupFlow(doc, convert(tokenize(html), 'flow', doc, mediaPolicy(options))));
   return fragment;
 }
 
@@ -331,7 +506,12 @@ function fromDom(node: Node): RawNode[] {
     else if (child.nodeType === 1) {
       const element = child as Element;
       const name = element.tagName.toLowerCase();
-      out.push({ name, href: name === 'a' ? element.getAttribute('href') : null, children: fromDom(element) });
+      const attrs: Record<string, string> = {};
+      if (MEDIA_TAGS.has(name)) for (const attr of MEDIA_ATTRS) {
+        const value = element.getAttribute(attr);
+        if (value !== null) attrs[attr] = value;
+      }
+      out.push({ name, href: name === 'a' ? element.getAttribute('href') : null, attrs, children: fromDom(element) });
     }
   });
   return out;
@@ -346,6 +526,15 @@ function print(node: Node): string {
   const element = node as Element;
   const name = element.tagName.toLowerCase();
   if (name === 'br' || name === 'hr') return `<${name}>`;
+  if (name === 'img') {
+    const size = element.hasAttribute('width') ? ` width="${escapeAttr(element.getAttribute('width') ?? '')}" height="${escapeAttr(element.getAttribute('height') ?? '')}"` : '';
+    return `<img src="${escapeAttr(element.getAttribute('src') ?? '')}" alt="${escapeAttr(element.getAttribute('alt') ?? '')}"${size}>`;
+  }
+  if (name === 'video') {
+    const poster = element.getAttribute('poster');
+    const title = element.getAttribute('title');
+    return `<video src="${escapeAttr(element.getAttribute('src') ?? '')}"${poster ? ` poster="${escapeAttr(poster)}"` : ''}${title ? ` title="${escapeAttr(title)}"` : ''} controls preload="metadata"></video>`;
+  }
   const children = Array.from(element.childNodes);
   // Saut de ligne final d'un bloc (ajouté par les navigateurs) : sans effet, retiré.
   if (TEXT_BLOCKS.has(name) || name === 'li') {
@@ -357,12 +546,14 @@ function print(node: Node): string {
 
 /** Contenu vide (aucun texte, aucune ligne horizontale). */
 function isEmptyContent(nodes: Node[]): boolean {
-  return !nodes.some((n) => hasText(n) || (n.nodeType === 1 && (n as Element).querySelector?.('hr')) || n.nodeName === 'HR');
+  return !nodes.some(hasContent);
 }
 
 /** HTML propre d'un contenu DOM (éditeur) : mêmes règles que `parseRichText`. Chaîne vide si rien n'est saisi. */
-export function serializeRichText(root: Node, doc: Document = document): string {
-  const nodes = groupFlow(doc, convert(fromDom(root), 'flow', doc));
+export function serializeRichText(root: Node, doc: Document = document, options?: UiRichTextOptions): string {
+  const nodes = groupFlow(doc, convert(fromDom(root), 'flow', doc, mediaPolicy(options)));
+  // Paragraphes vides en fin de contenu (où l'éditeur place le curseur après une ligne ou une figure) : retirés.
+  while (nodes.length > 1 && nodes[nodes.length - 1].nodeName === 'P' && !hasContent(nodes[nodes.length - 1])) nodes.pop();
   return isEmptyContent(nodes) ? '' : nodes.map(print).join('');
 }
 
@@ -370,8 +561,8 @@ export function serializeRichText(root: Node, doc: Document = document): string 
  * Nettoie du HTML non fiable selon la liste blanche de l'éditeur (pour afficher ou réenregistrer côté client).
  * Le serveur doit refaire ce nettoyage : voir l'onglet « Côté serveur » de la documentation.
  */
-export function sanitizeRichText(html: string | null | undefined, doc: Document = document): string {
-  const nodes = Array.from(parseRichText(html, doc).childNodes);
+export function sanitizeRichText(html: string | null | undefined, doc: Document = document, options?: UiRichTextOptions): string {
+  const nodes = Array.from(parseRichText(html, doc, options).childNodes);
   return isEmptyContent(nodes) ? '' : nodes.map(print).join('');
 }
 

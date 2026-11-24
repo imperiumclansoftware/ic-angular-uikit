@@ -1,0 +1,46 @@
+# config/packages/html_sanitizer.yaml — sanitizer AVEC MÉDIAS (éditeur avec [mediaSource] ou [media]), à déclarer
+# à côté de app.rich_text_sanitizer et à injecter avec #[Target('app.rich_text_media_sanitizer')].
+# Même liste blanche, plus figure / figcaption / img / video ; adresses des médias en http(s) ou relatives
+# (data:, javascript: retirés) ; autoplay retiré, controls imposé. Restreignez les domaines avec allowed_media_hosts.
+framework:
+    html_sanitizer:
+        sanitizers:
+            app.rich_text_media_sanitizer:
+                default_action: drop
+                block_elements: [div, span, section, article, header, footer, main, aside, nav, picture, address, center, font, small, big, sub, sup, mark, abbr, cite, q, time, kbd, var, samp, label, table, thead, tbody, tfoot, tr, td, th, caption, dl, dt, dd, details, summary]
+                allow_elements:
+                    p: []
+                    h2: []
+                    h3: []
+                    h4: []
+                    blockquote: []
+                    pre: []
+                    ul: []
+                    ol: []
+                    li: []
+                    hr: []
+                    br: []
+                    strong: []
+                    b: []
+                    em: []
+                    i: []
+                    u: []
+                    s: []
+                    code: []
+                    a: [href]
+                    figure: []
+                    figcaption: []
+                    img: [src, alt, width, height]
+                    video: [src, poster, title]
+                allowed_link_schemes: [http, https, mailto, tel]
+                allow_relative_links: true
+                allowed_media_schemes: [http, https]
+                allow_relative_medias: true
+                # allowed_media_hosts: [medias.exemple.fr]   # seulement vos médias (pas de pixel de pistage)
+                force_attributes:
+                    a:
+                        rel: noopener noreferrer nofollow ugc
+                    video:
+                        controls: controls
+                        preload: metadata
+                max_input_length: 131072

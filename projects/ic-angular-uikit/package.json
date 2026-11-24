@@ -1,6 +1,6 @@
 {
   "name": "ic-angular-uikit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Composants Angular 22 accessibles (WCAG 2.1 AA) et thémables : formulaires, tableaux, menus, carrousel, tableau de bord… Thèmes clair, sombre et saisonniers, compatible CSP stricte.",
   "keywords": [
     "angular",

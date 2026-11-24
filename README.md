@@ -75,6 +75,19 @@ styles qui ne fuient pas dans les instances imbriquées du même composant (comb
   gérés par le composant, `execCommand` limité aux marques et aux blocs. Le serveur doit renettoyer : onglet
   « Côté serveur » (Symfony HtmlSanitizer, Node sanitize-html, validés par un banc de 31 tests).
 
+## Fichiers, galerie, médias de l'éditeur
+
+- `UiFileSource` (`lib/file-manager/file-source.ts`) : contrat commun (lister obligatoire, le reste facultatif ;
+  actions masquées si absentes), `uiHttpFileSource` (REST) et `uiMemoryFileSource` (démos, tests).
+- `ui-file-manager` : listbox multisélection (tabindex itinérant, grille 2D), dialogues `ui-dialog` pour le nom et
+  la suppression, `ui-context-menu`, envois `Observable` annulables ; zone étroite → vignettes réduites (requête de
+  conteneur).
+- `ui-media-gallery` : `<dialog>` natif plein écran, `ui-image` (préchargement), `ui-media-player` pour les vidéos.
+- Médias de l'éditeur : option `media` de `rich-text-html.ts` (figure normalisée, attributs connus, adresses
+  filtrées) ; figures non éditables dans la zone de saisie, bouton × ajouté au rendu et ignoré à la sérialisation.
+- Exemples serveur `backend-examples/file-manager` (Symfony, Node) validés par `test-files.sh` (44 contrôles) ;
+  variantes « médias » des nettoyeurs de `backend-examples/rich-text-editor` (8 contrôles chacune).
+
 ## Conversation avec une IA
 
 - `ui-chat` : fil en `role="log"` sans annonce de chaque morceau du flux ; la réponse complète passe par une zone

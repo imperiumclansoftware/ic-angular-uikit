@@ -28,6 +28,9 @@ import { UiTextField } from '../text-field/text-field';
 import { UiToolbar, UiToolbarSeparator } from '../toolbar/toolbar';
 import { UiFieldMessage } from '../validation/field-message';
 import { UiFieldValidation } from '../validation/field-validation';
+import { UiFileSource } from '../file-manager/file-source';
+import { UiFileSize } from '../file-upload/file-utils';
+import { UiMediaPicker, UiPickedMedia } from '../media-picker/media-picker';
 import {
   UiRichTextBlock,
   parseRichText,
@@ -36,6 +39,9 @@ import {
   richTextLength,
   safeRichTextUrl,
   serializeRichText,
+  UiRichTextMediaPolicy,
+  UiRichTextOptions,
+  createRichTextFigure,
 } from './rich-text-html';
 
 const optionalNumber = (v: unknown) => (v === undefined || v === null || v === '' ? undefined : numberAttribute(v));
@@ -100,7 +106,7 @@ export class UiRichTextContent {}
  */
 @Component({
   selector: 'ui-rich-text-editor',
-  imports: [UiFieldMessage, UiToolbar, UiToolbarSeparator, UiSelect, UiTextField, UiButton, UiRichTextContent],
+  imports: [UiFieldMessage, UiToolbar, UiToolbarSeparator, UiSelect, UiTextField, UiButton, UiRichTextContent, UiMediaPicker],
   changeDetection: ChangeDetectionStrategy.OnPush,
   hostDirectives: [
     {
@@ -227,6 +233,22 @@ export class UiRichTextContent {}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M3 12h18" /></svg>
           </button>
+          @if (mediaSource() || media()) {
+            <button
+              type="button"
+              class="ui-rte__btn"
+              aria-label="Image ou vidéo"
+              title="Insérer une image ou une vidéo"
+              aria-haspopup="dialog"
+              [disabled]="isDisabled()"
+              (mousedown)="$event.preventDefault()"
+              (click)="openMedia()"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="m21 15-5-5L5 21" />
+              </svg>
+            </button>
+          }
           <button
             type="button"
             class="ui-rte__btn"
@@ -293,6 +315,7 @@ export class UiRichTextContent {}
         (input)="onInput($event)"
         (beforeinput)="onBeforeInput($event)"
         (keydown)="onKeydown($event)"
+        (click)="onContentClick($event)"
         (paste)="onPaste($event)"
         (drop)="onDrop($event)"
         (dragstart)="dragInside = true"
@@ -332,6 +355,11 @@ export class UiRichTextContent {}
         <button uiButton type="button" size="sm" (click)="applyLink()">Appliquer</button>
       </div>
     </div>
+
+    <span class="ui-rte__sr" aria-live="polite">{{ announcement() }}</span>
+    @if (mediaSource() || media()) {
+      <ui-media-picker #mediaPicker [source]="mediaSource()" [accept]="mediaAccept()" [maxFileSize]="mediaMaxFileSize()" [urlPolicy]="mediaPolicy()" />
+    }
   `,
   styleUrls: ['../core/field.css', './rich-text-editor.css'],
 })
@@ -358,6 +386,17 @@ export class UiRichTextEditor implements ControlValueAccessor {
   readonly blocks = input<readonly UiRichTextBlock[]>(['p', 'h2', 'h3', 'blockquote', 'pre']);
   /** Garde la mise en forme du texte collé (nettoyée) ; sinon, colle du texte brut. */
   readonly pasteFormatting = input(true, { transform: booleanAttribute });
+  /**
+   * Bibliothèque de médias (`UiFileSource`) : active le bouton « Image ou vidéo » et le sélecteur. Les médias sont
+   * alors acceptés dans la valeur (`figure > img | video`) : le serveur doit les accepter aussi.
+   */
+  readonly mediaSource = input<UiFileSource>();
+  /** Accepte les médias sans bibliothèque (adresse seulement) ; `{ allowUrl }` restreint les adresses. */
+  readonly media = input<boolean | UiRichTextMediaPolicy>(false);
+  /** Types proposés par le sélecteur de médias. */
+  readonly mediaAccept = input('image/*,video/*');
+  /** Taille maximale des fichiers envoyés depuis le sélecteur. */
+  readonly mediaMaxFileSize = input<UiFileSize>();
 
   /** Émis quand l'éditeur gagne (`true`) ou perd (`false`) le focus. */
   readonly focusChange = output<boolean>();
@@ -406,6 +445,17 @@ export class UiRichTextEditor implements ControlValueAccessor {
   private savedRange: Range | null = null;
   /** Sélection au moment d'ouvrir le panneau de lien (le focus rendu à l'éditeur remet le curseur au début). */
   private linkRange: Range | null = null;
+  /** Sélection au moment d'ouvrir le sélecteur de médias. */
+  private mediaRange: Range | null = null;
+  /** Message lu par les lecteurs d'écran (insertion, retrait d'un média). */
+  protected readonly announcement = signal('');
+  private readonly mediaPicker = viewChild<UiMediaPicker>('mediaPicker');
+  /** Règle des médias (désactivés sans `media` ni `mediaSource`). */
+  protected readonly mediaPolicy = computed<UiRichTextMediaPolicy>(() => {
+    const media = this.media();
+    return typeof media === 'object' ? media : {};
+  });
+  protected readonly richOptions = computed<UiRichTextOptions>(() => ({ media: this.media() || this.mediaSource() ? this.mediaPolicy() : false }));
   private history: Snapshot[] = [];
   private historyIndex = -1;
   private lastKind = '';
@@ -460,11 +510,11 @@ export class UiRichTextEditor implements ControlValueAccessor {
 
   private render(html: string, resetHistory: boolean): void {
     const root = this.editableRef().nativeElement;
-    root.replaceChildren(parseRichText(html, this.document));
+    root.replaceChildren(parseRichText(html, this.document, this.richOptions()));
     this.lastHtml = html;
     this.refreshMeta();
     if (resetHistory) {
-      this.history = [{ html: serializeRichText(root, this.document), start: 0, end: 0 }];
+      this.history = [{ html: serializeRichText(root, this.document, this.richOptions()), start: 0, end: 0 }];
       this.historyIndex = 0;
       this.updateHistoryState();
     }
@@ -473,14 +523,15 @@ export class UiRichTextEditor implements ControlValueAccessor {
   private refreshMeta(): void {
     const root = this.editableRef().nativeElement;
     const text = (root.textContent ?? '').replace(/[\u200b]/g, '');
-    this.empty.set(text.trim() === '' && !root.querySelector('hr, li'));
-    this.textLength.set(this.maxLength() ? richTextLength(serializeRichText(root, this.document)) : text.length);
+    this.decorateFigures(root);
+    this.empty.set(text.trim() === '' && !root.querySelector('hr, li, figure'));
+    this.textLength.set(this.maxLength() ? richTextLength(serializeRichText(root, this.document, this.richOptions())) : text.length);
   }
 
   /** Contenu modifié (saisie, commande, collage) : valeur émise et historique. */
   private contentChanged(kind: string): void {
     const root = this.editableRef().nativeElement;
-    const html = serializeRichText(root, this.document);
+    const html = serializeRichText(root, this.document, this.richOptions());
     this.refreshMeta();
     this.record(html, kind);
     this.emit(html);
@@ -521,12 +572,12 @@ export class UiRichTextEditor implements ControlValueAccessor {
 
   private restore(snapshot: Snapshot): void {
     const root = this.editableRef().nativeElement;
-    root.replaceChildren(parseRichText(snapshot.html, this.document));
+    root.replaceChildren(parseRichText(snapshot.html, this.document, this.richOptions()));
     root.focus({ preventScroll: true });
     this.setSelectionOffsets(snapshot.start, snapshot.end);
     this.lastKind = '';
     this.refreshMeta();
-    this.emit(serializeRichText(root, this.document));
+    this.emit(serializeRichText(root, this.document, this.richOptions()));
     this.updateHistoryState();
     this.updateState();
   }
@@ -943,6 +994,10 @@ export class UiRichTextEditor implements ControlValueAccessor {
   }
 
   protected onKeydown(event: KeyboardEvent): void {
+    if ((event.key === 'Backspace' || event.key === 'Delete') && !event.ctrlKey && !event.metaKey && this.removeAdjacentFigure(event.key === 'Backspace')) {
+      event.preventDefault();
+      return;
+    }
     if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
     const key = event.key.toLowerCase();
     const actions: Record<string, () => void> = {
@@ -967,6 +1022,94 @@ export class UiRichTextEditor implements ControlValueAccessor {
       event.preventDefault();
       action();
     }
+  }
+
+  // ---------------------------------------------------------------- Médias
+
+  /** Ouvre le sélecteur de médias ; le média choisi est inséré après le bloc courant. */
+  protected async openMedia(): Promise<void> {
+    const picker = this.mediaPicker();
+    if (!picker || this.isDisabled() || this.readonly()) return;
+    this.mediaRange = this.restoreSelection()?.cloneRange() ?? null;
+    const media = await picker.pick();
+    const range = this.mediaRange;
+    this.mediaRange = null;
+    const root = this.editableRef().nativeElement;
+    root.focus({ preventScroll: true });
+    if (media) this.insertMedia(media, range && root.contains(range.startContainer) ? range : null);
+    else if (range) this.restoreSelection(range);
+  }
+
+  /** Insère une figure après le bloc courant (ou à la fin), suivie d'un paragraphe où continuer la saisie. */
+  insertMedia(media: UiPickedMedia, range: Range | null = null): void {
+    const figure = createRichTextFigure(this.document, media, this.mediaPolicy());
+    if (!figure || this.readonly() || this.isDisabled()) return;
+    const root = this.editableRef().nativeElement;
+    let block: Node | null = range?.endContainer ?? null;
+    while (block && block.parentNode !== root) block = block.parentNode;
+    const p = this.document.createElement('p');
+    p.append(this.document.createElement('br'));
+    const empty = block && block !== root && block.nodeName === 'P' && !(block.textContent ?? '').trim();
+    if (block && block !== root && empty) (block as Element).replaceWith(figure, p);
+    else if (block && block !== root) (block as Element).after(figure, p);
+    else root.append(figure, p);
+    const caret = this.document.createRange();
+    caret.setStart(p, 0);
+    caret.collapse(true);
+    this.document.getSelection()?.removeAllRanges();
+    this.document.getSelection()?.addRange(caret);
+    this.savedRange = caret.cloneRange();
+    this.contentChanged('insertMedia');
+    this.announcement.set(media.kind === 'image' ? 'Image insérée.' : 'Vidéo insérée.');
+  }
+
+  /** Figures : non modifiables dans le texte (un bloc entier), avec un bouton pour les retirer. */
+  private decorateFigures(root: HTMLElement): void {
+    root.querySelectorAll('figure').forEach((figure) => {
+      if (figure.getAttribute('contenteditable') === 'false') return;
+      figure.setAttribute('contenteditable', 'false');
+      figure.classList.add('ui-rte__figure');
+      const remove = this.document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'ui-rte__figure-remove';
+      const label = figure.querySelector('video') ? 'Retirer la vidéo' : 'Retirer l’image';
+      remove.setAttribute('aria-label', label);
+      remove.title = label;
+      remove.textContent = '×';
+      figure.append(remove);
+    });
+  }
+
+  protected onContentClick(event: MouseEvent): void {
+    const button = (event.target as HTMLElement).closest('.ui-rte__figure-remove');
+    if (!button || this.readonly() || this.isDisabled()) return;
+    event.preventDefault();
+    button.closest('figure')?.remove();
+    this.contentChanged('deleteMedia');
+    this.announcement.set('Média retiré.');
+  }
+
+  /** Retour arrière au début d'un bloc précédé d'une figure (ou Suppr à la fin d'un bloc suivi d'une figure). */
+  private removeAdjacentFigure(backward: boolean): boolean {
+    if (this.readonly() || this.isDisabled()) return false;
+    const selection = this.document.getSelection();
+    if (!selection?.rangeCount || !selection.isCollapsed) return false;
+    const root = this.editableRef().nativeElement;
+    const range = selection.getRangeAt(0);
+    let block: Node | null = range.startContainer;
+    while (block && block.parentNode !== root) block = block.parentNode;
+    if (!block || block === root || block.nodeType !== 1) return false;
+    const probe = this.document.createRange();
+    probe.selectNodeContents(block);
+    if (backward) probe.setEnd(range.startContainer, range.startOffset);
+    else probe.setStart(range.startContainer, range.startOffset);
+    if (probe.toString().replace(/[\u200b]/g, '') !== '') return false;
+    const neighbour = backward ? (block as Element).previousElementSibling : (block as Element).nextElementSibling;
+    if (neighbour?.nodeName !== 'FIGURE') return false;
+    neighbour.remove();
+    this.contentChanged('deleteMedia');
+    this.announcement.set('Média retiré.');
+    return true;
   }
 
   protected onPaste(event: ClipboardEvent): void {
@@ -1000,7 +1143,7 @@ export class UiRichTextEditor implements ControlValueAccessor {
   /** Insère du contenu collé ou déposé, nettoyé par la liste blanche, à la position du curseur. */
   private insertContent(html: string, text: string): void {
     const root = this.editableRef().nativeElement;
-    let fragment = html ? parseRichText(html, this.document) : null;
+    let fragment = html ? parseRichText(html, this.document, this.richOptions()) : null;
     if (!fragment?.textContent?.trim()) fragment = this.textFragment(text);
     if (!fragment.childNodes.length) return;
     const range = this.restoreSelection();

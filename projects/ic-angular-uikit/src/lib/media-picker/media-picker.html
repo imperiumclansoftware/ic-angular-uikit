@@ -1,0 +1,70 @@
+<ui-dialog [open]="open()" [title]="title()" size="lg" (closed)="onClosed()">
+  @if (open()) {
+    <form class="ui-mp-picker" (submit)="$event.preventDefault(); insert()">
+      @if (showLibrary() && allowUrl()) {
+        <ui-tabs ariaLabel="Origine du média" [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event); submitted.set(false)">
+          <ui-tab label="Bibliothèque" />
+          <ui-tab label="Adresse" />
+        </ui-tabs>
+      }
+
+      @if (showLibrary() && tab() === 0) {
+        <ui-file-manager
+          class="ui-mp-picker__library"
+          [source]="source()!"
+          selectionMode="single"
+          [accept]="accept()"
+          [selectFolders]="false"
+          [maxFileSize]="maxFileSize()"
+          ariaLabel="Médias"
+          [selection]="selection()"
+          (selectionChange)="onSelection($event)"
+          (open)="onOpenEntry($event)"
+        />
+        @if (submitted() && !candidate()) {
+          <p class="ui-mp-picker__error" role="alert">Choisissez une image ou une vidéo.</p>
+        }
+      } @else if (allowUrl()) {
+        <div class="ui-mp-picker__url">
+          <ui-text-field label="Adresse de l’image ou de la vidéo" type="url" placeholder="https://… ou /medias/photo.jpg" hint="YouTube et Vimeo ne sont pas acceptés ici : seulement des fichiers." [value]="url()" [error]="urlError()" (valueChange)="url.set($event)" />
+          <ui-select label="Type" [options]="kindOptions" [value]="urlKind()" (valueChange)="urlKind.set($any($event) ?? 'auto')" />
+        </div>
+      }
+
+      @if (candidate(); as media) {
+        <fieldset class="ui-mp-picker__details">
+          <legend>{{ media.kind === 'image' ? 'Description de l’image' : 'Description de la vidéo' }}</legend>
+          <div class="ui-mp-picker__preview" aria-hidden="true">
+            @if (media.kind === 'image' || media.poster) {
+              <ui-image [src]="media.kind === 'image' ? media.src : media.poster!" alt="" ratio="4/3" fit="contain" loader="skeleton" />
+            } @else {
+              <span class="ui-mp-picker__video">▶ Vidéo</span>
+            }
+          </div>
+          <div class="ui-mp-picker__fields">
+            @if (media.kind === 'image') {
+              <ui-text-field
+                #altField
+                label="Texte alternatif"
+                hint="Ce que montre l’image, pour les personnes qui ne la voient pas."
+                [value]="alt()"
+                [disabled]="decorative()"
+                [error]="altError()"
+                (valueChange)="alt.set($event)"
+              />
+              <ui-checkbox [checked]="decorative()" (checkedChange)="decorative.set($event)" description="Elle n’apporte aucune information (ornement, fond).">Image décorative</ui-checkbox>
+            } @else {
+              <ui-text-field #altField label="Titre de la vidéo" hint="Facultatif ; lu par les lecteurs d’écran." [value]="alt()" (valueChange)="alt.set($event)" />
+            }
+            <ui-text-field label="Légende" hint="Facultative ; affichée sous le média." [value]="caption()" (valueChange)="caption.set($event)" />
+          </div>
+        </fieldset>
+      }
+
+      <div class="ui-mp-picker__actions">
+        <button uiButton type="button" variant="outline" (click)="cancel()">Annuler</button>
+        <button uiButton type="submit">Insérer</button>
+      </div>
+    </form>
+  }
+</ui-dialog>

@@ -1,0 +1,83 @@
+<ul #grid class="ui-gallery__grid" [attr.aria-label]="ariaLabel()">
+  @for (item of items(); track $index; let i = $index) {
+    @let video = kinds()[i] === 'video';
+    <li class="ui-gallery__tile">
+      <button
+        type="button"
+        class="ui-gallery__open"
+        [attr.data-index]="i"
+        [attr.aria-label]="(video ? 'Lire la vidéo : ' : 'Agrandir : ') + item.alt"
+        aria-haspopup="dialog"
+        (click)="open(i)"
+      >
+        @if (thumb(item, i); as src) {
+          <ui-image [src]="src" alt="" [ratio]="tileRatio(item)" loader="skeleton" />
+        } @else {
+          <span class="ui-gallery__placeholder" [style.aspect-ratio]="tileRatio(item)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" /><path d="m18 10 4-2.5v9L18 14" /></svg>
+            <span>{{ item.alt }}</span>
+          </span>
+        }
+        @if (video) {
+          <span class="ui-gallery__play" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z" /></svg></span>
+        }
+      </button>
+      @if (captions() && item.caption) {
+        <p class="ui-gallery__caption" aria-hidden="true">{{ item.caption }}</p>
+      }
+    </li>
+  }
+</ul>
+
+<!-- eslint-disable-next-line @angular-eslint/template/interactive-supports-focus -- dialog natif : il reçoit le focus à l’ouverture (showModal). -->
+<dialog
+  #dialog
+  class="ui-gallery__dialog"
+  [attr.aria-label]="ariaLabel() + ' : visionneuse'"
+  (cancel)="$event.preventDefault(); close()"
+  (keydown)="onDialogKeydown($event)"
+  (click)="onDialogClick($event)"
+>
+  @if (item(); as shown) {
+    <header class="ui-gallery__bar">
+      <span class="ui-gallery__counter">{{ (current() ?? 0) + 1 }} / {{ items().length }}</span>
+      <button type="button" class="ui-gallery__btn" aria-label="Fermer la visionneuse" title="Fermer (Échap)" (click)="close()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+      </button>
+    </header>
+    <div class="ui-gallery__stage" (pointerdown)="onPointerDown($event)" (pointerup)="onPointerUp($event)">
+      @if (isVideo()) {
+        <ui-media-player class="ui-gallery__player" [sources]="videoSources()" visualization="none" [autoAdvance]="false" [ariaLabel]="'Vidéo : ' + shown.alt" />
+      } @else {
+        <ui-image class="ui-gallery__image" [src]="shown.src" [srcset]="shown.srcset" [sizes]="shown.sizes" [alt]="shown.alt" fit="contain" loading="eager" priority [width]="shown.width" [height]="shown.height" />
+      }
+    </div>
+    @if (shown.caption) {
+      <p class="ui-gallery__legend">{{ shown.caption }}</p>
+    }
+    @if (items().length > 1) {
+      <button type="button" class="ui-gallery__btn ui-gallery__nav ui-gallery__nav--prev" aria-label="Précédent" title="Précédent (←)" [disabled]="!hasPrev()" (click)="previous()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+      </button>
+      <button type="button" class="ui-gallery__btn ui-gallery__nav ui-gallery__nav--next" aria-label="Suivant" title="Suivant (→)" [disabled]="!hasNext()" (click)="next()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+      </button>
+      @if (filmstrip()) {
+        <ul class="ui-gallery__filmstrip" aria-label="Miniatures">
+          @for (item of items(); track $index; let i = $index) {
+            <li>
+              <button type="button" [attr.aria-label]="(i + 1) + ' : ' + item.alt" [attr.aria-current]="i === current()" (click)="current.set(i)">
+                @if (thumb(item, i); as src) {
+                  <ui-image [src]="src" alt="" ratio="1" loader="none" preloadMargin="600px" />
+                } @else {
+                  <span class="ui-gallery__mini-video" aria-hidden="true">▶</span>
+                }
+              </button>
+            </li>
+          }
+        </ul>
+      }
+    }
+  }
+  <p class="ui-gallery__sr" aria-live="polite" aria-atomic="true">{{ announcement() }}</p>
+</dialog>

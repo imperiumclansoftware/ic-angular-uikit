@@ -1,5 +1,5 @@
 {
-  "intro": "`ui-rich-text-editor` produit du HTML nettoyé par une liste blanche, mais **ce nettoyage côté navigateur n'est qu'un confort** : une requête peut être forgée sans passer par l'éditeur. Le serveur doit donc **nettoyer à nouveau** tout HTML reçu, avec la même liste blanche, **avant de l'enregistrer**, puis ne réafficher que ce HTML nettoyé (avec `ui-rich-text`, jamais `[innerHTML]`).\n\nListe blanche commune : `p`, `h2`–`h4`, `blockquote`, `pre`, `ul`, `ol`, `li`, `hr`, `br`, `strong`, `em`, `u`, `s`, `code`, `a[href]` (http, https, mailto, tel ou relatif). Les éléments inconnus sont retirés en gardant leur texte ; `script`, `style`, `iframe`, `svg`, `img`… sont retirés avec leur contenu ; tous les autres attributs (`style`, `onclick`, `class`…) disparaissent ; les liens reçoivent `rel=\"noopener noreferrer nofollow ugc\"`.\n\nContrat des exemples : `POST /api/comments` `{ content }` → `201 { id, content }` (HTML nettoyé), `GET /api/comments` → commentaires de l'utilisateur connecté. Règles appliquées : authentification ; CSRF « double submit » (cookie `XSRF-TOKEN` = en-tête `X-XSRF-TOKEN`) ; propriétaire = utilisateur de la session ; corps JSON de 64 Ko au plus ; texte visible de 5 000 caractères au plus et non vide **après** nettoyage ; `Cache-Control: no-store`.\n\nCodes d'erreur : `400` (JSON mal formé), `401` (non connecté), `403` (jeton CSRF), `413` (trop volumineux), `415` (pas du JSON), `422` (vide ou trop long).",
+  "intro": "`ui-rich-text-editor` produit du HTML nettoyé par une liste blanche, mais **ce nettoyage côté navigateur n'est qu'un confort** : une requête peut être forgée sans passer par l'éditeur. Le serveur doit donc **nettoyer à nouveau** tout HTML reçu, avec la même liste blanche, **avant de l'enregistrer**, puis ne réafficher que ce HTML nettoyé (avec `ui-rich-text`, jamais `[innerHTML]`).\n\nListe blanche commune : `p`, `h2`–`h4`, `blockquote`, `pre`, `ul`, `ol`, `li`, `hr`, `br`, `strong`, `em`, `u`, `s`, `code`, `a[href]` (http, https, mailto, tel ou relatif). Les éléments inconnus sont retirés en gardant leur texte ; `script`, `style`, `iframe`, `svg`, `img`… sont retirés avec leur contenu ; tous les autres attributs (`style`, `onclick`, `class`…) disparaissent ; les liens reçoivent `rel=\"noopener noreferrer nofollow ugc\"`.\n\nContrat des exemples : `POST /api/comments` `{ content }` → `201 { id, content }` (HTML nettoyé), `GET /api/comments` → commentaires de l'utilisateur connecté. Règles appliquées : authentification ; CSRF « double submit » (cookie `XSRF-TOKEN` = en-tête `X-XSRF-TOKEN`) ; propriétaire = utilisateur de la session ; corps JSON de 64 Ko au plus ; texte visible de 5 000 caractères au plus et non vide **après** nettoyage ; `Cache-Control: no-store`.\n\nCodes d'erreur : `400` (JSON mal formé), `401` (non connecté), `403` (jeton CSRF), `413` (trop volumineux), `415` (pas du JSON), `422` (vide ou trop long).\n\n**Avec médias** (`[mediaSource]` ou `[media]` sur l'éditeur) : la valeur peut contenir `figure`, `figcaption`, `img[src alt width height]` et `video[src poster title]`. Le serveur doit les accepter **et** filtrer leurs adresses : http(s) ou relatives seulement (`data:`, `javascript:` retirés), idéalement limitées à vos domaines (pas de pixel de pistage) ; `autoplay` et les attributs d'événement retirés, `controls` imposé. Variantes testées ci-dessous (Symfony et Node, 8 contrôles chacune).",
   "backends": [
     {
       "id": "angular",
@@ -22,6 +22,11 @@
         {
           "file": "symfony-html_sanitizer.yaml",
           "name": "config/packages/html_sanitizer.yaml",
+          "language": "sh"
+        },
+        {
+          "file": "symfony-html_sanitizer-media.yaml",
+          "name": "config/packages/html_sanitizer.yaml (médias)",
           "language": "sh"
         },
         {
@@ -55,6 +60,11 @@
         {
           "file": "node-express.mjs",
           "name": "server.mjs",
+          "language": "ts"
+        },
+        {
+          "file": "node-sanitize-media.mjs",
+          "name": "server.mjs (médias)",
           "language": "ts"
         }
       ]

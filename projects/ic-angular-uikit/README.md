@@ -85,9 +85,9 @@ export class Newsletter {
 | --- | --- |
 | Mise en page | `ui-layout` + `ui-sidebar` (colonnes, rail, tiroir mobile), `ui-app-bar`, `ui-jumbotron` |
 | Actions | `uiButton` (7 variantes, icônes, chargement), `ui-toolbar`, `ui-context-menu` (clic droit, appui long, clavier) |
-| Formulaires | `ui-text-field`, `ui-textarea`, `ui-select`, `ui-checkbox`, `ui-radio-group`, `ui-switch`, `ui-file-upload`, `ui-rich-text-editor` (WYSIWYG) |
+| Formulaires | `ui-text-field`, `ui-textarea`, `ui-select`, `ui-checkbox`, `ui-radio-group`, `ui-switch`, `ui-file-upload`, `ui-file-picker` (choix dans une bibliothèque), `ui-media-picker`, `ui-rich-text-editor` (WYSIWYG, médias) |
 | Navigation | `ui-menu` + `ui-submenu` (vertical / horizontal, multi-niveaux), `ui-tabs` (horizontaux / verticaux) |
-| Affichage | `ui-chat` (conversation avec une IA), `ui-image` (préchargement et loader), `ui-media-player` (musique, vidéos, YouTube / Vimeo) + `ui-mini-player`, `ui-rich-text` (HTML riche nettoyé), `ui-badge`, `ui-card`, `ui-carousel`, `ui-dashboard`, `ui-icon`, `ui-org-chart`, `ui-ribbon`, `ui-table` (recherche, filtres, pagination, export CSV / Excel / JSON), `ui-season-effects` |
+| Affichage | `ui-file-manager` (gestionnaire de fichiers), `ui-media-gallery` (galerie et visionneuse), `ui-chat` (conversation avec une IA), `ui-image` (préchargement et loader), `ui-media-player` (musique, vidéos, YouTube / Vimeo) + `ui-mini-player`, `ui-rich-text` (HTML riche nettoyé), `ui-badge`, `ui-card`, `ui-carousel`, `ui-dashboard`, `ui-icon`, `ui-org-chart`, `ui-ribbon`, `ui-table` (recherche, filtres, pagination, export CSV / Excel / JSON), `ui-season-effects` |
 | Retours & superpositions | `ui-alert`, `ui-dialog`, `ui-loader` (loaders choisis globalement ou localement) |
 | Imperium | `ui-arabesque-frame`, `ui-banner-header`, `ui-section-divider`, `ui-branch-badge`, `ui-member-card`, `ui-event-card`, `ui-feed-post`, `ui-stat-block`, `ui-ornament`, `ui-framed-avatar` |
 
@@ -179,6 +179,26 @@ npm install @fontsource-variable/cinzel @fontsource-variable/inter @fontsource/u
   "node_modules/@fontsource/jetbrains-mono/400.css"
 ]
 ```
+
+## Fichiers, galerie et médias dans l'éditeur
+
+Une même source de fichiers alimente le gestionnaire, le sélecteur de médias et l'éditeur :
+
+```ts
+protected readonly files = uiHttpFileSource(inject(HttpClient), '/api/files');
+```
+
+```html
+<ui-file-manager [source]="files" maxFileSize="20 Mo" (open)="preview($event)" />
+<ui-file-picker label="Galerie" [source]="files" accept="image/*,video/*" multiple [maxFiles]="6" display="grid" [formControl]="gallery" />
+<ui-media-gallery [items]="photos" />
+<ui-rich-text-editor label="Article" [mediaSource]="files" [(value)]="article" />
+<ui-rich-text [html]="article" [media]="true" />
+```
+
+Les médias restent désactivés par défaut dans la liste blanche HTML : avec `[mediaSource]` ou `[media]`, seules
+les figures `img` / `video` à adresse http(s) ou relative sont acceptées. Le serveur doit revérifier tout ce qu'il
+reçoit : la documentation fournit l'API de fichiers (Symfony, Node.js) et les nettoyeurs HTML avec médias.
 
 ## Loaders et images
 

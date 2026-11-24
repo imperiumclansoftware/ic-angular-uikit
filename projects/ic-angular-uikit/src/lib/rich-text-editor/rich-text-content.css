@@ -23,3 +23,25 @@
 }
 .ui-rte__content pre { white-space: pre-wrap; }
 .ui-rte__content ::selection { background: color-mix(in srgb, var(--ui-color-primary) 28%, transparent); }
+
+/* Figures (médias) : bloc entier, retiré avec son bouton ou Retour arrière. */
+.ui-rte__content figure.ui-rte__figure { position: relative; width: fit-content; max-width: 100%; margin-inline: auto; border-radius: var(--ui-radius-md); }
+.ui-rte__content figure.ui-rte__figure:hover, .ui-rte__content figure.ui-rte__figure:focus-within { outline: 2px solid var(--ui-color-primary); outline-offset: 2px; }
+.ui-rte__figure-remove {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.65);
+  color: #fff;
+  font: 700 1.1rem/1 var(--ui-font-family);
+  cursor: pointer;
+}
+.ui-rte__figure-remove:hover { background: var(--ui-color-danger); }
+.ui-rte__figure-remove:focus-visible { outline: 2px solid var(--ui-color-focus-ring); outline-offset: 2px; }

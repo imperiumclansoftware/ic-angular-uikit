@@ -8,7 +8,7 @@ import {
   inject,
   input,
 } from '@angular/core';
-import { parseRichText } from './rich-text-html';
+import { UiRichTextMediaPolicy, parseRichText } from './rich-text-html';
 
 /**
  * Affiche du HTML riche (produit par `ui-rich-text-editor` ou venu d'un serveur) sans `innerHTML` : le contenu est
@@ -16,6 +16,8 @@ import { parseRichText } from './rich-text-html';
  * Scripts, styles, attributs d'événement, images et liens `javascript:` sont retirés.
  *
  * Les liens vers un autre site reçoivent `rel="noopener noreferrer nofollow ugc"` (contenu d'utilisateur).
+ * Avec `media`, les images et vidéos (`figure`) produites par l'éditeur sont affichées (adresses http(s) ou
+ * relatives seulement ; restreignez-les avec un filtre `{ allowUrl }`).
  */
 @Component({
   selector: 'ui-rich-text',
@@ -33,12 +35,14 @@ export class UiRichText {
   readonly externalLinks = input<'_self' | '_blank'>('_self');
   /** Valeur `rel` des liens vers un autre site. */
   readonly externalRel = input('noopener noreferrer nofollow ugc');
+  /** Affiche images et vidéos (`true`, ou un filtre d'adresses `{ allowUrl }`). Défaut : non. */
+  readonly media = input<boolean | UiRichTextMediaPolicy>(false);
 
   constructor() {
     const host = inject(ElementRef<HTMLElement>).nativeElement as HTMLElement;
     const document = inject(DOCUMENT);
     effect(() => {
-      const fragment = parseRichText(this.html(), document);
+      const fragment = parseRichText(this.html(), document, { media: this.media() });
       const origin = document.location?.origin;
       fragment.querySelectorAll('a[href]').forEach((link) => {
         const href = link.getAttribute('href') ?? '';
